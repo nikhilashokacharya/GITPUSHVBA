@@ -92,6 +92,7 @@ export default class FDFrame extends Mixins(FdContainerVue) {
 
   mounted () {
     // this.scrollLeftTop(this.data)
+    this.scrollTopCalculate()
     if (this.fieldsetRef) {
       this.captionHeight = this.fieldsetRef.offsetHeight!
     }
