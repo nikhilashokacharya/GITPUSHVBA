@@ -258,6 +258,23 @@ export default class FDTextBox extends Mixins(FdControlVue) {
    *
    */
   handlePasswordChar (event: TextEvent) {
+    const controlPropData = this.properties
+    if (event.target instanceof HTMLTextAreaElement) {
+      if (!controlPropData.MultiLine) {
+        event.target.value = event.target.value.replace(/(\r\n|\n|\r)/gm, '')
+        for (let i = 0; i < event.target.value.length; i++) {
+          event.target.value = event.target.value.replace(event.target.value[i], this.properties.PasswordChar!)
+        }
+      }
+      this.updateDataModel({
+        propertyName: 'Value',
+        value: (event.target).value
+      })
+      this.updateDataModel({
+        propertyName: 'Text',
+        value: (event.target).value
+      })
+    }
     let newData
     let text = this.properties.Text!
     let selectionDiff =
@@ -423,6 +440,9 @@ export default class FDTextBox extends Mixins(FdControlVue) {
       this.updateAutoSize()
     }
     if (event.target instanceof HTMLTextAreaElement) {
+      if (!controlPropData.MultiLine) {
+        event.target.value = event.target.value.replace(/(\r\n|\n|\r)/gm, '')
+      }
       this.updateDataModel({
         propertyName: 'Value',
         value: (event.target).value
