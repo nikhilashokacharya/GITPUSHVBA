@@ -54,11 +54,6 @@
         >
           {{ properties.Text }}
         </div>
-        <label
-          ref="autoSizeTextarea"
-          class="labelStyle"
-          :class="labelStyleObj"
-        ></label>
       </div>
       <div
         class="selected"
@@ -274,6 +269,11 @@
         </div>
       </div>
     </div>
+        <label
+          ref="autoSizeTextarea"
+          class="labelStyle"
+          :class="labelStyleObj"
+        ></label>
   </div>
 </template>
 
@@ -1072,6 +1072,9 @@ export default class FDComboBox extends Mixins(FdControlVue) {
     if (e.target instanceof HTMLTextAreaElement) {
       const tempEvent = e.target
       this.eTargetValue = e.target.value
+      if (!controlPropData.MultiLine) {
+        this.eTargetValue = this.eTargetValue.replace(/(\r\n|\n|\r)/gm, '')
+      }
       this.updateDataModel({ propertyName: 'Value', value: this.eTargetValue })
       this.updateDataModel({ propertyName: 'Text', value: this.eTargetValue })
       if (this.properties.RowSource !== '') {
@@ -1280,11 +1283,11 @@ export default class FDComboBox extends Mixins(FdControlVue) {
   updateAutoSize () {
     if (this.properties.AutoSize === true) {
       let spaceCount = 0
-      this.updateDataModel({ propertyName: 'SelectionMargin', value: false })
       this.$nextTick(() => {
         const textareaRef: HTMLTextAreaElement = this.textareaRef
         // replication of stype attribute to Label tag for autoSize property to work
         let tempLabel: HTMLLabelElement = this.autoSizeTextarea
+        tempLabel.innerText = textareaRef.value
         tempLabel.style.display = 'inline'
         tempLabel.style.fontStyle = textareaRef.style.fontStyle
         tempLabel.style.fontSize = parseInt(textareaRef.style.fontSize) + 'px'
@@ -1293,25 +1296,29 @@ export default class FDComboBox extends Mixins(FdControlVue) {
         tempLabel.style.whiteSpace = textareaRef.style.whiteSpace
         tempLabel.style.wordBreak = textareaRef.style.wordBreak
         tempLabel.style.fontWeight = textareaRef.style.fontWeight
-        tempLabel.style.width =
-        (this.textareaRef.value.length + 1) *
-          parseInt(textareaRef.style.fontSize) +
-        'px'
         for (let i = 0; i < this.textareaRef.value.length; i++) {
           if (this.textareaRef.value[i] === ' ') {
             spaceCount = spaceCount + 1
           }
         }
         let addValue = spaceCount * (parseInt(textareaRef.style.fontSize) / 4.5)
-        tempLabel.style.height = textareaRef.style.height
-        tempLabel.innerText = textareaRef.value
-        this.updateDataModel({
-          propertyName: 'Width',
-          value:
+        if (this.properties.SelectionMargin) {
+          this.updateDataModel({
+            propertyName: 'Width',
+            value:
+            tempLabel.offsetWidth > 20
+              ? tempLabel.offsetWidth + 25 + addValue + 8
+              : tempLabel.offsetWidth + 29 + addValue + 8
+          })
+        } else {
+          this.updateDataModel({
+            propertyName: 'Width',
+            value:
             tempLabel.offsetWidth > 20
               ? tempLabel.offsetWidth + 25 + addValue
               : tempLabel.offsetWidth + 29 + addValue
-        })
+          })
+        }
         this.updateDataModel({
           propertyName: 'Height',
           value: tempLabel.offsetHeight + 15
