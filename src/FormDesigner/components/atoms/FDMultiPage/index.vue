@@ -244,6 +244,7 @@ export default class FDMultiPage extends Mixins(FdContainerVue) {
    */
   protected get styleMoveObj (): Partial<CSSStyleDeclaration> {
     const controlProp = this.properties
+    this.setScrollLeft()
     return {
       alignSelf: controlProp.TabOrientation === 1 ? 'flex-end' : '',
       float: controlProp.TabOrientation === 3 ? 'right' : '',
@@ -308,6 +309,8 @@ export default class FDMultiPage extends Mixins(FdContainerVue) {
         ? this.controls.length * this.properties.TabFixedHeight! +
           this.properties.Font!.FontSize! * this.controls!.length
         : this.properties.Font!.FontSize! * 2.3 * this.controls!.length
+    this.updateDataModel({ propertyName: 'Width', value: this.properties.Width! + 1 })
+    this.updateDataModel({ propertyName: 'Width', value: this.properties.Width! - 1 })
     return {
       position: 'absolute',
       zIndex: '3',

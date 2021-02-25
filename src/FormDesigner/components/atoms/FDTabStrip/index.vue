@@ -297,6 +297,7 @@ export default class FDTabStrip extends FdControlVue {
     } else if (controlProp.TabOrientation === 0) {
       bottomTopStyle = { [a[1]]: '0px' }
     }
+    this.setScrollLeft()
     return {
       ...bottomTopStyle,
       position: this.setPosition,
@@ -348,6 +349,8 @@ export default class FDTabStrip extends FdControlVue {
         ? this.extraDatas.Tabs!.length * this.properties.TabFixedHeight! +
           10 * this.extraDatas.Tabs!.length
         : this.properties.Font!.FontSize! * 2.3 * this.extraDatas.Tabs!.length
+    this.updateDataModel({ propertyName: 'Width', value: this.properties.Width! + 1 })
+    this.updateDataModel({ propertyName: 'Width', value: this.properties.Width! - 1 })
     return {
       position: 'absolute',
       zIndex: '30001',
