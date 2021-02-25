@@ -369,7 +369,7 @@ export default class Resizehandler extends FDCommonMethod {
     this.positions.movementY = this.positions.clientY - event.clientY
     const scale: number = (this.propControlData.properties.Zoom! * 1) / 100
     // const scale1: number = (this.propControlData.properties.Zoom! * 10) / 100
-    const grid: Array<number> = [9, 9]
+    const grid: Array<number> = (controlType === 'ComboBox' || controlType === 'ListBox' || controlType === 'TextBox') ? [9, userData[this.controlId].properties.Font!.FontSize! + 18] : [9, 9]
     const x: number =
       Math.round(this.positions.movementX / scale / grid[0]) * grid[0]
     const y: number =
