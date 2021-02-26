@@ -738,7 +738,7 @@ export default class ContextMenu extends FDCommonMethod {
 
   @Emit('createGroup')
   createGroup (groupId: string) {
-    return groupId
+    return { groupId: groupId, containerId: this.containerId }
   }
 
   updateControlGroupID (groupName: string, updateGroupId: string) {
@@ -1265,7 +1265,9 @@ export default class ContextMenu extends FDCommonMethod {
     const selected = this.selectedControls[this.userFormId].selected
     const selContainer = this.selectedControls[this.userFormId].container
     const filterControls = []
-    const controls = this.userformData[this.userFormId][this.selectedControls[this.userFormId].container[0]].controls
+    const controls = userData[this.selectedControls[this.userFormId].container[0]].type === 'MultiPage'
+      ? userData[this.getContainerList(this.selectedControls[this.userFormId].container[0])[0]].controls
+      : userData[this.selectedControls[this.userFormId].container[0]].controls
     for (const control of selected) {
       if (!control.startsWith('ID_USERFORM')) {
         if (control.startsWith('group')) {
@@ -1281,15 +1283,20 @@ export default class ContextMenu extends FDCommonMethod {
         }
       }
     }
-    if (selected.length === 1 && !selected[0].startsWith('group') && this.userformData[this.userFormId][selected[0]].properties.GroupID !== '') {
+    const selControlGroupId = !selected[0].startsWith('group')
+      ? userData[selected[0]].type === 'Page'
+        ? userData[this.getContainerList(selected[0])[0]].properties.GroupID!
+        : userData[selected[0]].properties.GroupID!
+      : ''
+    if (selected.length === 1 && !selected[0].startsWith('group') && selControlGroupId !== '') {
       for (let j = 0; j < controls.length; j++) {
-        if (userData[controls[j]].properties.GroupID === userData[selected[0]].properties.GroupID) {
+        if (userData[controls[j]].properties.GroupID === selControlGroupId) {
           filterControls.push(controls[j])
         }
       }
       if (filterControls.length === 2) {
-        const curSelect = filterControls[0] === selected[0] ? filterControls[1] : filterControls[0]
-        const selGroupId = userData[selected[0]].properties.GroupID
+        const container = userData[selected[0]].type === 'Page' ? this.getContainerList(selected[0])[0] : selected[0]
+        const curSelect = filterControls[0] === container ? filterControls[1] : filterControls[0]
         this.updateControlProperty('GroupID', '', curSelect)
       }
     }

@@ -137,7 +137,7 @@ export default class Resizehandler extends FDCommonMethod {
   startMoveControl (event: MouseEvent, handler: string, containerList: string[]) {
     this.isSelContainerList = containerList
     EventBus.$emit('handleName', 'notDrag')
-    if (this.getIsMoveTarget) {
+    if (this.getIsMoveTarget && this.size) {
       this.resizeDiv = handler
       this.handlerPosition.left = 0
       this.handlerPosition.top = 0
@@ -272,32 +272,32 @@ export default class Resizehandler extends FDCommonMethod {
   }
   get getLStyle () {
     if (this.resizeDiv === 'drag') {
-      return {
+      return this.size ? {
         left: `${-this.positions.movementX}px`,
         top: `${-this.positions.movementY}px`,
         height: this.isGroupControl ? `${this.size.height}px !important` : '100%'
-      }
+      } : null
     } else {
-      return {
+      return this.size ? {
         left: `${-this.handlerPosition.left}px !important`,
         top: `${-this.handlerPosition.top}px !important`,
         height: `${this.handlerPosition.height}px !important`
-      }
+      } : null
     }
   }
   get getTStyle () {
     if (this.resizeDiv === 'drag') {
-      return {
+      return this.size ? {
         left: `${-this.positions.movementX}px`,
         top: `${-this.positions.movementY}px`,
         width: this.isGroupControl ? `${this.size.width}px !important` : '100%'
-      }
+      } : null
     } else {
-      return {
+      return this.size ? {
         left: `${-this.handlerPosition.left}px`,
         top: `${-this.handlerPosition.top}px`,
         width: `${this.handlerPosition.width}px !important`
-      }
+      } : null
     }
   }
   get getRStyle () {
@@ -386,7 +386,7 @@ export default class Resizehandler extends FDCommonMethod {
       this.currentMouseDownEvent.customCallBack && this.currentMouseDownEvent.customCallBack()
     }
     const selected = this.selectedControls[this.userFormId].selected
-    if (selected.length === 1 && selected[0] === this.controlId) {
+    if (selected.length === 1 && selected[0] === this.controlId && this.size) {
       const top = (this.size.height! + y) > 0 ? y : y - (this.size.height! + y)
       const left = (this.size.width! + x) > 0 ? x : x - (this.size.width! + x)
       let incWidth = (this.size.width! + x) > 0 ? (this.size.width! + x) : -(this.size.width! + x)
@@ -423,7 +423,7 @@ export default class Resizehandler extends FDCommonMethod {
           this.handlerPosition.width = decWidth
         }
       }
-    } else {
+    } else if (this.size) {
       const top = y
       const left = x
       let incWidth = (this.size.width! + x) > 0 ? (this.size.width! + x) : 0
