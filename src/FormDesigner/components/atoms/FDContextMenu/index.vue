@@ -228,7 +228,7 @@ export default class ContextMenu extends FDCommonMethod {
     const controlType = this.userformData[this.userFormId][this.controlId].type
     const position = this.getCursorPos(event)
     const length = position.endPosition - position.startPosition
-    let baseValue = this.editTextRef.innerHTML.split('')
+    let baseValue = this.editTextRef.innerText.split('')
     baseValue.splice(position.startPosition, length)
     const updateValue = baseValue.slice(0, position.startPosition).join('') + this.copiedText + baseValue.slice(position.startPosition).join('')
     EventBus.$emit('updateText', updateValue)
