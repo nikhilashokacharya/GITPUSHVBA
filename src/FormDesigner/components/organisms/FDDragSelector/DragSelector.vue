@@ -173,6 +173,7 @@ export default {
       this.dragging = false
       this.updatePointData(this.point, e)
       this.dragSelectorControl(e)
+      this.addControlObj(e)
       this.resetPoint(e)
       // this.emitChangeThrottled();
       window.removeEventListener('mouseup', this.handleMouseUp)

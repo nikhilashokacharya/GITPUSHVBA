@@ -165,9 +165,9 @@ export default class ResizeControl extends FdSelectVue {
             this.selGroupControl(event)
           }
         }
+        this.isMoveWhenMouseDown = false
+        this.resize.handleMouseDown(event, 'drag', 'control', this.controlId)
       }
-      this.isMoveWhenMouseDown = false
-      this.resize.handleMouseDown(event, 'drag', 'control', this.controlId)
     }
   }
   @Emit('muldragControl')
@@ -199,9 +199,9 @@ export default class ResizeControl extends FdSelectVue {
             this.isGroupActive = true
           }
         }
+        this.isMoveWhenMouseDown = false
+        this.resize.handleMouseDown(event, 'drag', 'control', this.controlId)
       }
-      this.isMoveWhenMouseDown = false
-      this.resize.handleMouseDown(event, 'drag', 'control', this.controlId)
     }
   }
   @Emit('openMenu')
@@ -223,23 +223,31 @@ export default class ResizeControl extends FdSelectVue {
   openContextMenu (e: MouseEvent, parentID: string, controlID: string, type: string, mode: boolean) {
     this.$emit('openMenu', e, parentID, controlID, type, mode)
   }
+  getHighestZIndex (control: string) {
+    const userData = this.userformData[this.userFormId]
+    const type = this.propControlData.type
+    if (control === this.propControlData.properties.ID && (type === 'Frame' || type === 'MultiPage')) {
+      const containerControls = [...userData[this.getContainerList(control)[0]].controls]
+      containerControls.sort((a, b) => {
+        return userData[b].extraDatas!.zIndex! - userData[a].extraDatas!.zIndex!
+      })
+      return userData[containerControls[0]].extraDatas!.zIndex!
+    } else {
+      return -1
+    }
+  }
   get resizeControlStyle () {
     const userData = this.userformData[this.userFormId]
     const currentProperties = this.propControlData.properties
     const extraData = this.propControlData.extraDatas!
-    const bs = currentProperties.BorderStyle!
-    const isRotate = currentProperties.Width! > currentProperties.Height!
     const type = this.propControlData.type
+    const selected = this.getSelectedControlsDatas!
     let highestZIndex = -1
-    if (this.selectedControlArray.length === 1 && !this.selectedControlArray[0].startsWith('group')) {
-      const selected = userData[this.selectedControlArray[0]].type === 'Page' ? this.selectedContainer[0] : this.selectedControlArray[0]
-      if (selected === this.propControlData.properties.ID && (type === 'Frame' || type === 'MultiPage')) {
-        const containerControls = [...userData[this.getContainerList(selected)[0]].controls]
-        containerControls.sort((a, b) => {
-          return userData[b].extraDatas!.zIndex! - userData[a].extraDatas!.zIndex!
-        })
-        highestZIndex = userData[containerControls[0]].extraDatas!.zIndex!
-      }
+    const getContainerList = this.getContainerList(selected[0])
+    if (selected.includes(this.controlId)) {
+      highestZIndex = this.getHighestZIndex(this.controlId)!
+    } else if (getContainerList.includes(this.controlId)) {
+      highestZIndex = this.getHighestZIndex(this.controlId)!
     }
     return {
       left: `${currentProperties.Left}px`,
@@ -252,7 +260,7 @@ export default class ResizeControl extends FdSelectVue {
           ? 'none'
           : 'block',
       cursor: !this.isRunMode ? 'move' : 'default',
-      zIndex: (highestZIndex !== -1 && type !== 'Page' && this.isEditMode) ? highestZIndex + 1 : extraData.zIndex! <= 0 ? '' : extraData.zIndex!
+      zIndex: (highestZIndex !== -1) ? highestZIndex + 1 : extraData.zIndex! <= 0 ? '' : extraData.zIndex!
     }
   }
   get mainSelected () {
@@ -450,7 +458,7 @@ export default class ResizeControl extends FdSelectVue {
       }
     } else if (this.keyType === 'ctrlKey') {
       const userData = this.userformData[this.userFormId]
-      let selectedGroup = [this.controlId]
+      let selectedGroup = userData[this.controlId].properties.GroupID === '' ? [this.controlId] : [userData[this.controlId].properties.GroupID!]
       const currContainer = this.getContainerList(this.controlId)[0]
       let selected: string[] = this.selectedControls[this.userFormId].selected
       for (let i = 0; i < selected.length; i++) {
@@ -486,7 +494,7 @@ export default class ResizeControl extends FdSelectVue {
     EventBus.$emit('getCtrlEditMode', this.isEditMode)
   }
   handleMouseUp (event: MouseEvent) {
-    if (event.which !== 3 && this.controlId === this.actvControl) {
+    if (event.which !== 3 && this.controlId === this.actvControl && (this.selMultipleCtrl === false)) {
       const currentSelect = this.selectedControls[this.userFormId].selected
       if (currentSelect.length === 1 && currentSelect[0] === this.controlId && this.previousSel.includes(currentSelect[0])) {
         if (
@@ -509,6 +517,8 @@ export default class ResizeControl extends FdSelectVue {
         }
         this.isGroupActive = false
       }
+    } else {
+      this.selectedItem(event)
     }
     this.actvControl = ''
   }
@@ -567,7 +577,7 @@ export default class ResizeControl extends FdSelectVue {
         }
       }
     } else {
-      if (this.isMoving === false || this.keyType === 'ctrlKey' || this.keyType === 'shiftKey') {
+      if (this.isMoving === false || (this.selMultipleCtrl)) {
         this.isEditMode = false
       } else {
         this.isMoving = false
@@ -614,7 +624,7 @@ export default class ResizeControl extends FdSelectVue {
     const userData = this.userformData[this.userFormId]
     const selected = this.selectedControls[this.userFormId].selected
     const selContainer = userData[containerId].type === 'Page' ? this.getContainerList(containerId)[0] : containerId
-    if (this.controlId === selContainer) {
+    if (this.controlId === selContainer && this.selMultipleCtrl !== true) {
       let isSameContainer: boolean = false
       const groupId = userData[this.controlId].properties.GroupID!
       if (this.isGroupControlelected! === '') {

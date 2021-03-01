@@ -480,20 +480,21 @@ export default class Container extends FDCommonMethod {
    * @function dragSelectorStyle
    *
    */
+  get fitPictureSize () {
+    const type = this.propControlData.type
+    if (type === 'Userform') {
+      return 32
+    }
+  }
   get dragSelectorStyle () {
     const controlProp = this.propControlData.properties
     const type = this.propControlData.type
-    const ph = type && type === 'Page' ? this.height! : this.propControlData.properties.Height!
+    const ph = type && type === 'Page' ? this.height! : this.propControlData.properties.Height! - this.fitPictureSize!
     const pw = type && type === 'Page' ? this.width! : this.propControlData.properties.Width!
     return {
       height: ph + this.updatedDragHeight + 'px',
       width: pw + this.updatedDragWidth + 'px',
       cursor: this.toolBoxSelect !== 'Select' ? 'crosshair !important' : ''
-      // cursor: type && type === 'Page' ? 'default !important'
-      //   : this.toolBoxSelect !== 'Select' ? 'crosshair !important' : this.propControlData.properties.MousePointer !== 0 ||
-      //   this.propControlData.properties.MouseIcon !== ''
-      //     ? `${this.mouseCursorData} !important`
-      //     : 'default !important'
     }
   }
   get pictureChildDiv () {
@@ -518,7 +519,7 @@ export default class Container extends FDCommonMethod {
   get childDiv () {
     const controlProp = this.propControlData.properties
     const type = this.propControlData.type
-    const ph = type && type === 'Page' ? this.height! : this.propControlData.properties.Height!
+    const ph = type && type === 'Page' ? this.height! : this.propControlData.properties.Height! - this.fitPictureSize!
     const pw = type && type === 'Page' ? this.width! : this.propControlData.properties.Width!
     return {
       height: (controlProp.ScrollHeight === 0 || controlProp.ScrollHeight! < ph) ? ph + this.updatedDragHeight + 'px' : controlProp.ScrollHeight! + 'px',
