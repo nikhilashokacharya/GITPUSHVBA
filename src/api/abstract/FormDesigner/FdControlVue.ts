@@ -55,6 +55,7 @@ export default class FdControlVue extends Vue {
   spinButtonScrollBarClickCount: number = 0
   getSelectionStart: number = 0
   getSelectionEnd: number = 0
+  controlCursor: string = 'context-menu'
    // global variable to keep track of TripleState when enabled
    protected tripleState:number = 0
 
@@ -1697,5 +1698,27 @@ setCaretPosition () {
       sel.addRange(range)
     }
   })
+}
+updateMouseCursor () {
+  const controlProp = this.properties
+  if (this.data.type === 'Page' || this.data.type === 'MultiPage') {
+    EventBus.$emit('getMouseCursor', this.properties.ID, (pointer: string) => {
+      if (controlProp.ID === this.controlId) {
+        this.controlCursor = pointer
+      }
+    })
+  } else {
+    if (controlProp.MousePointer !== 0 || controlProp.MouseIcon !== '') {
+      this.controlCursor = this.getMouseCursorData
+    } else if (controlProp.MousePointer === 0) {
+      EventBus.$emit('getMouseCursor', this.properties.ID, (pointer: string) => {
+        if (controlProp.ID === this.controlId) {
+          this.controlCursor = pointer
+        }
+      })
+    } else {
+      this.controlCursor = 'default'
+    }
+  }
 }
 }

@@ -32,6 +32,7 @@
           data-gramm="false"
           ref="textareaRef"
           :style="cssStyleProperty"
+          @mouseover="updateMouseCursor"
           wrap="off"
           @dblclick="dblclick($event)"
           :tabindex="properties.TabIndex"
@@ -59,6 +60,7 @@
         class="selected"
         @click="enabledCheck($event)"
         :style="selectedStyleObj"
+        @mouseover="updateMouseCursor"
       >
         <div v-if="properties.DropButtonStyle === 1">
           <svg
@@ -157,7 +159,7 @@
         </div>
       </div>
     </div>
-      <div class="items" :class="{ selectHide: !open }" :style="itemsStyleObj" ref="itemsRef">
+      <div class="items" :class="{ selectHide: !open }" :style="itemsStyleObj" @mouseover="updateMouseCursor" ref="itemsRef">
         <div
           class="listStyle"
           :title="properties.ControlTipText"
@@ -1454,12 +1456,7 @@ export default class FDComboBox extends Mixins(FdControlVue) {
           : controlProp.TextAlign === 1
             ? 'center'
             : 'right',
-      cursor:
-        controlProp.MousePointer !== 0 || controlProp.MouseIcon !== ''
-          ? this.isEditMode || !this.isActivated
-            ? this.getMouseCursorData
-            : 'default'
-          : 'default'
+      cursor: this.controlCursor
     }
   }
   /**
@@ -1715,12 +1712,7 @@ export default class FDComboBox extends Mixins(FdControlVue) {
             ? '30px'
             : '15px',
       border: controlProp.RowSource !== '' ? '1px solid black' : '1px solid black',
-      cursor:
-        controlProp.MousePointer !== 0 || controlProp.MouseIcon !== ''
-          ? this.isEditMode || !this.isActivated
-            ? this.getMouseCursorData
-            : 'default'
-          : 'default',
+      cursor: this.controlCursor,
       position: 'absolute',
       top: `${controlProp.Height! + 1}px`,
       zIndex: '999'
@@ -1751,12 +1743,7 @@ export default class FDComboBox extends Mixins(FdControlVue) {
             : controlProp.DropButtonStyle === 3
               ? '9px 14px'
               : '',
-      cursor:
-        controlProp.MousePointer !== 0 || controlProp.MouseIcon !== ''
-          ? this.isEditMode || !this.isActivated
-            ? this.getMouseCursorData
-            : 'default'
-          : 'default',
+      cursor: this.controlCursor,
       display: 'flex',
       justifyContent: 'center',
       alignItems: controlProp.DropButtonStyle === 1 ? 'center' : 'flex-end'

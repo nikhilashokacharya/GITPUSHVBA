@@ -3,6 +3,7 @@
   <fieldset
     class="fieldset"
     :style="cssStyleProperty"
+    @mouseover="updateMouseCursor"
     :title="properties.ControlTipText"
     :tabindex="properties.TabIndex"
     @keydown.ctrl.exact.stop="selectMultipleCtrl($event,true)"
@@ -173,9 +174,7 @@ export default class FDFrame extends Mixins(FdContainerVue) {
       height: `${controlProp.Height}px`,
       padding: '0px',
       outline: 'none',
-      cursor: controlProp.MousePointer !== 0 || controlProp.MouseIcon !== ''
-        ? `${this.getMouseCursorData} !important`
-        : 'default !important',
+      cursor: this.controlCursor,
       fontFamily: font.FontStyle! !== '' ? this.setFontStyle : font.FontName!,
       fontSize: `${font.FontSize}px`,
       fontStyle: font.FontItalic || this.isItalic ? 'italic' : '',

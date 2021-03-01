@@ -4,6 +4,7 @@
     class="outer-check"
     :style="cssStyleProperty"
     ref="componentRef"
+    @mouseover="updateMouseCursor"
     @click="optionBtnClick"
     :tabindex="properties.TabIndex"
     @mousedown="controlEditMode"
@@ -405,10 +406,7 @@ export default class FDOptionButton extends Mixins(FdControlVue) {
       wordBreak: controlProp.WordWrap ? 'break-all' : 'normal',
       color:
         controlProp.Enabled === true ? controlProp.ForeColor : this.getEnabled,
-      cursor:
-        controlProp.MousePointer !== 0 || controlProp.MouseIcon !== ''
-          ? this.getMouseCursorData
-          : 'default',
+      cursor: this.controlCursor,
       fontFamily: font.FontStyle! !== '' ? this.setFontStyle : font.FontName!,
       fontSize: `${font.FontSize}px`,
       fontStyle: font.FontItalic || this.isItalic ? 'italic' : '',

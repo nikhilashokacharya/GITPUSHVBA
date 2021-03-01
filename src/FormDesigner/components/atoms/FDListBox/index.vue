@@ -12,7 +12,7 @@
     @scroll="updateScrollLeft"
     @keydown.esc="setContentEditable($event, false)"
   >
-    <div class="table-style" :style="tableStyleObj" ref="listBoxTableRef" v-if="properties.RowSource !== ''">
+    <div class="table-style" :style="tableStyleObj" @mouseover="updateMouseCursor" ref="listBoxTableRef" v-if="properties.RowSource !== ''">
       <div v-if="properties.ColumnHeads === true" class="theadClass">
         <div class="thead" :style="colHeadsStyle">
           <template
@@ -86,7 +86,7 @@
         </div>
       </div>
     </div>
-    <div v-else>
+    <div v-else @mouseover="updateMouseCursor" :style="{cursor: controlCursor}">
         <div v-if="properties.ColumnHeads === true" class="theadClass">
                 <div
                   v-if="properties.RowSource === '' && properties.ColumnCount !== -1"
@@ -868,10 +868,6 @@ export default class FDListBox extends Mixins(FdControlVue) {
       pointerEvents: this.isEditMode ? 'auto' : 'none',
       backgroundColor: controlProp.BackColor,
       borderColor: controlProp.BorderStyle === 1 ? controlProp.BorderColor : '',
-      cursor:
-        controlProp.MousePointer !== 0 || controlProp.MouseIcon !== ''
-          ? this.getMouseCursorData
-          : 'default',
       borderLeft:
         controlProp.BorderStyle === 1
           ? '1px solid ' + controlProp.BorderColor
@@ -994,7 +990,8 @@ export default class FDListBox extends Mixins(FdControlVue) {
           ? this.tempWeight
           : '',
       fontStretch: font.FontStyle !== '' ? this.tempStretch : '',
-      width: '100%'
+      width: '100%',
+      cursor: this.controlCursor
       // display: this.properties.ColumnCount === 0 ? 'none' : ''
     }
   }

@@ -1,5 +1,5 @@
 <template>
-<div ref="componentRef" :tabindex="properties.TabIndex" :style="outerDivStyleObj">
+<div ref="componentRef" :tabindex="properties.TabIndex" :style="outerDivStyleObj" @mouseover="updateMouseCursor">
   <button
     class="toggle-button"
     :style="styleObj"
@@ -186,10 +186,7 @@ export default class FDToggleButton extends Mixins(FdControlVue) {
           controlProp.Value === 'true')
           ? controlProp.ForeColor
           : this.getEnabled,
-      cursor:
-        controlProp.MousePointer !== 0 || controlProp.MouseIcon !== ''
-          ? this.getMouseCursorData
-          : 'default',
+      cursor: this.controlCursor,
       fontFamily: (font.FontStyle! !== '') ? this.setFontStyle : font.FontName!,
       fontSize: `${font.FontSize}px`,
       fontStyle: font.FontItalic || this.isItalic ? 'italic' : '',

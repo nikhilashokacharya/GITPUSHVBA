@@ -29,6 +29,7 @@
           :style="styleButton"
           :runmode="getDisableValue"
           @blur="isClicked = false"
+          @mouseover="updateMouseCursor"
         >
           <div v-if="checkOtherOrientations()" :style="svgOuterDivObj">
             <svg version="1.0" xmlns="http://www.w3.org/2000/svg" :style="svgStyleObj" :height="(properties.Height/2 > 60 && properties.Height < 850) ? properties.Height/2 - 45 : properties.Height >= 850 ? 425 : 15" :width="(properties.Width/2 > 60 && properties.Width < 850) ? properties.Width/2 - 45  : properties.Width >= 850 ? 425 : 15"
@@ -74,6 +75,7 @@
           :style="styleButton"
           :runmode="getDisableValue"
           @blur="isClicked = false"
+          @mouseover="updateMouseCursor"
         >
           <div v-if="checkOtherOrientations()" :style="svgOuterDivObj">
             <svg version="1.0" xmlns="http://www.w3.org/2000/svg" :style="svgStyleObj" :height="(properties.Height/2 > 60 && properties.Height < 850) ? properties.Height/2 - 45 : properties.Height >= 850 ? 425 : 15" :width="(properties.Width/2 > 60 && properties.Width < 850) ? properties.Width/2 - 45  : properties.Width >= 850 ? 425 : 15"
@@ -271,10 +273,7 @@ export default class FDSpinButton extends Mixins(FdControlVue) {
       ...this.baseStyle,
       backgroundColor: controlProp.BackColor,
       overflow: 'hidden',
-      cursor:
-        controlProp.MousePointer !== 0 || controlProp.MouseIcon !== ''
-          ? this.getMouseCursorData
-          : 'default',
+      cursor: this.controlCursor,
       display:
         controlProp.Visible && this.isRunMode
           ? 'flex'

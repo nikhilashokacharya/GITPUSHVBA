@@ -4,6 +4,7 @@
       class="outer-page"
       :style="pageStyleObj"
       :title="properties.ControlTipText"
+      @mouseover="updateMouseCursor"
       @mousedown="pageMouseDown"
       @contextmenu="handleContextMenu"
       @keydown.delete.stop.exact="deleteMultiPage"
@@ -13,16 +14,18 @@
       <div
         class="pages"
         :style="styleTabsObj"
+        @mouseover="updateMouseCursor"
         :title="properties.ControlTipText"
         v-if="controls.length > 0"
       >
-        <div class="move" ref="scrolling" :style="styleMoveObj" @mouseup="mouseUpOnPage">
+        <div class="move" ref="scrolling" :style="styleMoveObj" @mouseup="mouseUpOnPage" @mouseover="updateMouseCursor">
           <div
             ref="controlTabsRef"
             class="page"
             v-for="(value, key) in controls"
             :key="key"
             :style="getTabStyle"
+            @mouseover="updateMouseCursor"
           >
             <FDControlTabs
               @setValue="setValue"
@@ -43,6 +46,7 @@
               :isItalic="isItalic"
               :tempStretch="tempStretch"
               :tempWeight="tempWeight"
+              :controlCursor="controlCursor"
               :tempWidth="tempWidth"
               ref="controlTab"
             />
@@ -52,6 +56,7 @@
           class="content"
           :style="styleContentObj"
           ref="contentRef"
+          @mouseover="updateMouseCursor"
           :title="properties.ControlTipText"
         >
           <div
@@ -92,8 +97,8 @@
         </div>
         <div></div>
         <div :style="getScrollButtonStyleObj" ref="buttonStyleRef">
-          <button class="left-button" @click="leftmove"></button>
-          <button class="right-button" @click="rightmove"></button>
+          <button class="left-button" :style="scrollButtonStyle" @click="leftmove" @mouseover="updateMouseCursor"></button>
+          <button class="right-button" :style="scrollButtonStyle" @click="rightmove" @mouseover="updateMouseCursor"></button>
         </div>
       </div>
     </div>
@@ -147,6 +152,13 @@ export default class FDMultiPage extends Mixins(FdContainerVue) {
   widthValue: number = 40;
   rowsCount: string = '';
 
+  get scrollButtonStyle () {
+    const controlProp = this.properties
+    return {
+      cursor: this.controlCursor,
+      opacity: this.scrolling ? ((this.scrolling.scrollLeft === (this.scrolling.scrollWidth - this.scrolling.clientWidth)) ? '0.4' : '1') : '1'
+    }
+  }
   /**
    * @description sets scrollbar left and top position
    * @function scrollLeftTop
@@ -212,6 +224,7 @@ export default class FDMultiPage extends Mixins(FdContainerVue) {
       width: `${controlProp.Width}px`,
       height: `${controlProp.Height}px`,
       top: `${controlProp.Top}px`,
+      cursor: this.controlCursor,
       display: display,
       borderLeft: controlProp.Style === 0 ? '2px solid whitesmoke' : '',
       borderBottom: controlProp.Style === 0 ? (controlProp.TabOrientation === 0 ? '1px solid gray' : '') : ''
@@ -229,6 +242,7 @@ export default class FDMultiPage extends Mixins(FdContainerVue) {
     return {
       overflow: 'hidden',
       display: 'flex',
+      cursor: this.controlCursor,
       backgroundColor: controlProp.BackColor,
       justifyContent: controlProp.TabOrientation === 3 ? 'flex-end' : '',
       height: `${controlProp.Height!}px`
@@ -266,6 +280,7 @@ export default class FDMultiPage extends Mixins(FdContainerVue) {
             ? `${controlProp.Width}px`
             : `${controlProp.Width! - 60}px`,
       overflow: 'hidden',
+      cursor: this.controlCursor,
       gridAutoColumns: (controlProp.MultiRow && controlProp.TabOrientation === 2) || (controlProp.MultiRow && controlProp.TabOrientation === 3) ? 'max-content' : ''
     }
   }
@@ -549,10 +564,7 @@ export default class FDMultiPage extends Mixins(FdContainerVue) {
         controlProp.TabOrientation === 0 || controlProp.TabOrientation === 1
           ? 'inline-block'
           : 'block',
-      cursor:
-        controlProp.MousePointer !== 0 || controlProp.MouseIcon !== ''
-          ? this.getMouseCursorData
-          : 'default'
+      cursor: this.controlCursor
     }
   }
 
@@ -588,7 +600,7 @@ export default class FDMultiPage extends Mixins(FdContainerVue) {
     if (controlProp.Style !== 2) {
       if (controlProp.Style === 1) {
         if (controlProp.TabOrientation === 0 || controlProp.TabOrientation === 1) {
-          width = `${controlProp.Width! - 9}px`
+          width = `${controlProp.Width! - 6}px`
         } else {
           if (controlProp.TabFixedWidth! > 0) {
             if (controlProp.MultiRow) {
@@ -824,6 +836,7 @@ export default class FDMultiPage extends Mixins(FdContainerVue) {
                   : '40px'
               : '0px'
           : '0px',
+      cursor: this.controlCursor,
       padding: controlProp.MultiRow ? '0px' : '0px',
       boxShadow: controlProp.Style === 0 ? (controlProp.TabOrientation === 0 ? '1px 0px gray' : '1px 1px gray') : 'none'
     }
@@ -1029,6 +1042,8 @@ export default class FDMultiPage extends Mixins(FdContainerVue) {
       Vue.nextTick(() => {
         this.topValue = this.scrolling.offsetHeight!
         this.widthValue = this.scrolling.clientWidth
+        this.updateDataModel({ propertyName: 'Height', value: this.properties.Height! + 1 })
+        this.updateDataModel({ propertyName: 'Height', value: this.properties.Height! - 1 })
       })
     }
   }

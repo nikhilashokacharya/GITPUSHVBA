@@ -11,6 +11,7 @@
       data-gramm="false"
       ref="textareaRef"
       :style="cssStyleProperty"
+      @mouseover="updateMouseCursor"
       :tabindex="properties.TabIndex"
       :maxlength="properties.MaxLength !==0 ? properties.MaxLength : ''"
       :disabled="getDisableValue"
@@ -117,9 +118,11 @@ export default class FDTextBox extends Mixins(FdControlVue) {
   @Ref('hideSelectionDiv') readonly hideSelectionDiv!: HTMLDivElement;
   @Ref('autoSizeTextarea') readonly autoSizeTextarea!: HTMLLabelElement;
   @Ref('textareaRef') textareaRef: HTMLTextAreaElement;
+
   $el: HTMLDivElement
   originalText: string = ''
   trimmedText: string = ''
+  fitToSizeWhenMultiLine: boolean = false
   dblclick (e: Event) {
     let newSelectionStart = 0
     const eTarget = e.target as HTMLTextAreaElement
@@ -201,10 +204,7 @@ export default class FDTextBox extends Mixins(FdControlVue) {
         controlProp.WordWrap && controlProp.MultiLine ? 'break-word' : 'normal',
       color:
         controlProp.Enabled === true ? controlProp.ForeColor : this.getEnabled,
-      cursor:
-        controlProp.MousePointer !== 0 || controlProp.MouseIcon !== ''
-          ? this.getMouseCursorData
-          : 'default',
+      cursor: this.controlCursor,
       fontFamily: (font.FontStyle! !== '') ? this.setFontStyle : font.FontName!,
       fontSize: `${font.FontSize}px`,
       fontStyle: font.FontItalic || this.isItalic ? 'italic' : '',
@@ -502,9 +502,6 @@ export default class FDTextBox extends Mixins(FdControlVue) {
 
   @Watch('properties.MultiLine')
   multiLineValidate () {
-    if (this.properties.AutoSize) {
-      this.updateAutoSize()
-    }
     if (this.textareaRef) {
       this.originalText = this.textareaRef.value
       this.trimmedText = this.originalText.replace(/(\r\n|\n|\r)/gm, '¶')
@@ -516,6 +513,10 @@ export default class FDTextBox extends Mixins(FdControlVue) {
         this.updateDataModel({ propertyName: 'Value', value: this.trimmedText })
       }
     }
+    if (this.properties.AutoSize) {
+      this.fitToSizeWhenMultiLine = true
+      this.updateAutoSize()
+    }
   }
   /**
    * @override
@@ -523,40 +524,47 @@ export default class FDTextBox extends Mixins(FdControlVue) {
   @Watch('properties.AutoSize', { deep: true })
   updateAutoSize () {
     if (this.properties.AutoSize === true) {
-      let spaceCount = 0
       this.$nextTick(() => {
         const textareaRef: HTMLTextAreaElement = this.textareaRef
         // replication of stype attribute to Label tag for autoSize property to work
         let tempLabel: HTMLLabelElement = this.autoSizeTextarea
         tempLabel.style.display = 'inline'
+        tempLabel.innerText = textareaRef.value
         tempLabel.style.fontFamily = textareaRef.style.fontFamily
         tempLabel.style.fontStretch = textareaRef.style.fontStretch
         tempLabel.style.fontStyle = textareaRef.style.fontStyle
         tempLabel.style.fontSize =
             parseInt(textareaRef.style.fontSize) + 'px'
-        tempLabel.style.whiteSpace = textareaRef.style.whiteSpace
-        tempLabel.style.wordBreak = textareaRef.style.wordBreak
-        tempLabel.style.fontWeight = textareaRef.style.fontWeight
-        tempLabel.style.width = (this.textareaRef.value.length + 1) *
-          parseInt(textareaRef.style.fontSize) +
-        'px'
-        tempLabel.style.height = textareaRef.style.height
-        tempLabel.innerText = textareaRef.value
-        for (let i = 0; i < this.textareaRef.value.length; i++) {
-          if (this.textareaRef.value[i] === ' ') {
-            spaceCount = spaceCount + 1
-          }
-        }
-        let addValue = spaceCount * (parseInt(textareaRef.style.fontSize) / 4.5)
         if (this.properties.MultiLine) {
-          this.updateDataModel({
-            propertyName: 'Width',
-            value: tempLabel.offsetWidth
-          })
+          if (!this.properties.WordWrap) {
+            tempLabel.style.whiteSpace = 'pre'
+            tempLabel.style.wordBreak = textareaRef.style.wordBreak
+          } else {
+            tempLabel.style.whiteSpace = 'break-spaces'
+            tempLabel.style.wordBreak = 'break-word'
+          }
+        } else {
+          tempLabel.style.whiteSpace = 'pre'
+          tempLabel.style.wordBreak = textareaRef.style.wordBreak
+        }
+        tempLabel.style.fontWeight = textareaRef.style.fontWeight
+        if (this.properties.MultiLine) {
+          if (this.fitToSizeWhenMultiLine) {
+            this.fitToSizeWhenMultiLine = false
+            this.updateDataModel({
+              propertyName: 'Width',
+              value: tempLabel.offsetWidth + 14
+            })
+          } else {
+            this.updateDataModel({
+              propertyName: 'Width',
+              value: tempLabel.offsetWidth
+            })
+          }
         } else {
           this.updateDataModel({
             propertyName: 'Width',
-            value: tempLabel.offsetWidth + 7 + addValue
+            value: tempLabel.offsetWidth + 14
           })
         }
         if (this.textareaRef.value === ' ' || this.textareaRef.value === '') {
