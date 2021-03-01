@@ -1,4 +1,5 @@
 <template>
+<div class="outerListBoxDiv" :style="outerListBoxStyleObj" @mouseover="updateMouseCursor">
   <div
     class="listStyle"
     ref="listStyleOuterRef"
@@ -12,7 +13,7 @@
     @scroll="updateScrollLeft"
     @keydown.esc="setContentEditable($event, false)"
   >
-    <div class="table-style" :style="tableStyleObj" @mouseover="updateMouseCursor" ref="listBoxTableRef" v-if="properties.RowSource !== ''">
+    <div class="table-style" :style="tableStyleObj" ref="listBoxTableRef" v-if="properties.RowSource !== ''">
       <div v-if="properties.ColumnHeads === true" class="theadClass">
         <div class="thead" :style="colHeadsStyle">
           <template
@@ -86,7 +87,7 @@
         </div>
       </div>
     </div>
-    <div v-else @mouseover="updateMouseCursor" :style="{cursor: controlCursor}">
+    <div v-else :style="{cursor: controlCursor}">
         <div v-if="properties.ColumnHeads === true" class="theadClass">
                 <div
                   v-if="properties.RowSource === '' && properties.ColumnCount !== -1"
@@ -108,6 +109,7 @@
         <div></div>
       </div>
     </div>
+  </div>
   </div>
 </template>
 
@@ -849,6 +851,11 @@ export default class FDListBox extends Mixins(FdControlVue) {
           }
         }
       }
+    }
+  }
+  get outerListBoxStyleObj () {
+    return {
+      cursor: this.controlCursor
     }
   }
   /**

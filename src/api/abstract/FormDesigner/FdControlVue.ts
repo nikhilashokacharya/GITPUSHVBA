@@ -7,6 +7,7 @@ import { PropType } from 'vue'
 import { Component, Emit, Prop, PropSync, Vue, Watch } from 'vue-property-decorator'
 import { EventBus } from '@/FormDesigner/event-bus'
 import FDEditableText from '@/FormDesigner/components/atoms/FDEditableText/index.vue'
+import { State } from 'vuex-class'
 
 @Component({
   name: 'FdControlVue'
@@ -16,7 +17,7 @@ export default class FdControlVue extends Vue {
   @Prop({ required: true, type: Boolean }) public isEditMode!: boolean
   @PropSync('isEditMode') public syncIsEditMode!: boolean
   @Prop() toolBoxSelectControl: string
-
+  @State((state: rootState) => state.fd.toolBoxSelect) toolBoxSelect!: fdState['toolBoxSelect']
   @Prop({ required: true, type: Object as PropType<controlData> }) public data! : controlData
   @Prop({ required: true, type: String }) public controlId! : string
   @Prop({ default: false }) isActivated: boolean
@@ -1701,7 +1702,9 @@ setCaretPosition () {
 }
 updateMouseCursor () {
   const controlProp = this.properties
-  if (this.data.type === 'Page' || this.data.type === 'MultiPage') {
+  if (this.toolBoxSelect !== 'Select') {
+    this.controlCursor = 'crosshair !important'
+  } else if (this.data.type === 'Page' || this.data.type === 'MultiPage') {
     EventBus.$emit('getMouseCursor', this.properties.ID, (pointer: string) => {
       if (controlProp.ID === this.controlId) {
         this.controlCursor = pointer

@@ -446,9 +446,10 @@ export default class FDOptionButton extends Mixins(FdControlVue) {
     const controlProp = this.properties
     return {
       boxShadow:
-        controlProp.SpecialEffect === 0 ? '' : '-1px -1px gray',
+      controlProp.SpecialEffect === 0 ? '' : '-1px -1px gray',
       border: controlProp.SpecialEffect === 0 ? '2px solid gray' : '',
-      height: controlProp.SpecialEffect === 0 ? '6px' : '10px'
+      height: controlProp.SpecialEffect === 0 ? '6px' : '10px',
+      cursor: this.controlCursor
     }
   }
 

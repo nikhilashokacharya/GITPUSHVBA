@@ -234,7 +234,8 @@ export default class FDCheckBox extends Mixins(FdControlVue) {
     return {
       boxShadow:
       controlProp.SpecialEffect === 0 ? '' : '-1px -1px gray',
-      border: controlProp.SpecialEffect === 0 ? '2px solid gray' : ''
+      border: controlProp.SpecialEffect === 0 ? '2px solid gray' : '',
+      cursor: this.controlCursor
     }
   }
 

@@ -6,6 +6,7 @@
   :tabindex="properties.TabIndex"
   @keydown.enter.self="setContentEditable($event, true)"
   @contextmenu="isEditMode ? openTextContextMenu($event): parentConextMenu($event)"
+  @mouseover="updateMouseCursor"
   >
     <textarea
       data-gramm="false"
@@ -45,6 +46,7 @@
       ref="hideSelectionDiv"
       @click="divHide($event, textareaRef)"
       :style="divcssStyleProperty"
+      @mouseover="updateMouseCursor"
       :title="properties.ControlTipText"
       class="text-box-design"
     >
@@ -220,8 +222,8 @@ export default class FDTextBox extends Mixins(FdControlVue) {
       fontWeight: font.FontBold ? 'bold' : (font.FontStyle !== '') ? this.tempWeight : '',
       fontStretch: (font.FontStyle !== '') ? this.tempStretch : '',
       display: display,
-      overflowX: this.getScrollBarX,
-      overflowY: this.getScrollBarY
+      overflowX: this.properties.AutoSize ? 'hidden' : this.getScrollBarX,
+      overflowY: this.properties.AutoSize ? 'hidden' : this.getScrollBarY
     }
   }
 
@@ -339,7 +341,8 @@ export default class FDTextBox extends Mixins(FdControlVue) {
       ...styleObject,
       display: 'none',
       paddingTop: '2px',
-      paddingLeft: '2px'
+      paddingLeft: '2px',
+      cursor: this.controlCursor
     }
   }
   /**
@@ -494,6 +497,9 @@ export default class FDTextBox extends Mixins(FdControlVue) {
 
   @Watch('isEditMode')
   editModeValidation () {
+    if (this.properties.AutoSize && !this.isEditMode) {
+      this.updateAutoSize()
+    }
     if (this.textareaRef) {
       this.originalText = this.textareaRef.value
       this.trimmedText = this.originalText.replace(/(\r\n|\n|\r)/gm, ',')
