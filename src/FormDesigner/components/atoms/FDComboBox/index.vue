@@ -300,7 +300,7 @@ export default class FDComboBox extends Mixins(FdControlVue) {
   @Ref('hideSelectionDiv') readonly hideSelectionDiv!: HTMLDivElement;
   @Ref('comboRef') comboRef!: HTMLDivElement;
   @Ref('itemsRef') itemsRef!: HTMLDivElement;
-  @Ref('trRef') trRef!: HTMLDivElement;
+  @Ref('trRef') trRef!: HTMLDivElement[];
 
   private tabindex = 0;
   eTargetValue: string = '';
@@ -397,7 +397,8 @@ export default class FDComboBox extends Mixins(FdControlVue) {
       width: '100%',
       textAlign: controlProp.TextAlign === 2 ? 'right' : controlProp.TextAlign === 1 ? 'center' : 'left',
       overflow: 'hidden',
-      paddingBottom: this.data.properties.Font!.FontSize! > 48 ? '10px' : '5px'
+      paddingBottom: this.properties.Font!.FontSize! >= 48 ? '0px' : this.properties.Font!.FontSize! >= 36 ? '4px' : this.properties.Font!.FontSize! >= 18 ? '6px' : this.properties.Font!.FontSize! >= 12 ? '7px' : this.properties.Font!.FontSize! >= 8 ? '9px' : ''
+
     }
   }
 
@@ -412,6 +413,7 @@ export default class FDComboBox extends Mixins(FdControlVue) {
   openValidate () {
     if (this.open) {
       this.updateDataModelExtraData({ propertyName: 'zIndex', value: -1 })
+      this.listHeightValue()
     } else {
       this.updateDataModelExtraData({ propertyName: 'zIndex', value: this.controlZIndex })
     }
@@ -419,6 +421,75 @@ export default class FDComboBox extends Mixins(FdControlVue) {
       Vue.nextTick(() => {
         this.headWidth = this.comboRef.children[1].children[0].scrollWidth + 'px'
       })
+    }
+  }
+
+  listHeightValue () {
+    if (!this.properties.ColumnHeads) {
+      if ((this.trRef && this.trRef[0]) && (this.itemsRef && this.itemsRef.children[0])) {
+        Vue.nextTick(() => {
+          const a = this.trRef[0] as HTMLDivElement
+          const c = this.itemsRef.children[0] as HTMLDivElement
+          if (this.properties.ListRows === 0 || this.properties.ListRows! >= this.extraDatas.RowSourceData!.length) {
+            let b = a.offsetHeight * this.extraDatas.RowSourceData!.length
+            if (c.scrollWidth > c.clientWidth) {
+              if (this.properties.ColumnCount === 1) {
+                c.style.height = b + 'px'
+                c.style.overflowX = 'hidden'
+              } else {
+                c.style.height = b + 15 + 'px'
+                c.style.overflowX = 'scroll'
+              }
+            } else {
+              c.style.height = b + 'px'
+              c.style.overflowX = 'hidden'
+            }
+          } else {
+            let b = a.offsetHeight * this.properties.ListRows!
+            if (c.scrollWidth > c.clientWidth) {
+              c.style.height = b + 15 + 'px'
+              c.style.overflowX = 'scroll'
+            } else {
+              c.style.height = b + 'px'
+              c.style.overflowX = 'hidden'
+            }
+          }
+        })
+      }
+    } else {
+      if (this.itemsRef.children[0].children[0].children[0]) {
+        if ((this.trRef && this.trRef[0]) && (this.itemsRef && this.itemsRef.children[0])) {
+          Vue.nextTick(() => {
+            const a = this.trRef[0] as HTMLDivElement
+            const c = this.itemsRef.children[0] as HTMLDivElement
+            if (this.properties.ListRows === 0 || this.properties.ListRows! >= this.extraDatas.RowSourceData!.length) {
+              let b = a.offsetHeight * this.extraDatas.RowSourceData!.length
+              if (c.scrollWidth > c.clientWidth) {
+                c.style.height = (b + 15) + this.itemsRef.children[0].children[0].children[0].clientHeight + 'px'
+                if (this.properties.ColumnCount === 1) {
+                  c.style.height = b + 'px'
+                  c.style.overflowX = 'hidden'
+                } else {
+                  c.style.height = b + 15 + 'px'
+                  c.style.overflowX = 'scroll'
+                }
+              } else {
+                c.style.height = b + this.itemsRef.children[0].children[0].children[0].clientHeight + 'px'
+                c.style.overflowX = 'hidden'
+              }
+            } else {
+              let b = a.offsetHeight * this.properties.ListRows!
+              if (c.scrollWidth > c.clientWidth) {
+                c.style.height = (b + 15) + this.itemsRef.children[0].children[0].children[0].clientHeight + 'px'
+                c.style.overflowX = 'scroll'
+              } else {
+                c.style.height = b + this.itemsRef.children[0].children[0].children[0].clientHeight + 'px'
+                c.style.overflowX = 'hidden'
+              }
+            }
+          })
+        }
+      }
     }
   }
 
@@ -1329,6 +1400,11 @@ export default class FDComboBox extends Mixins(FdControlVue) {
         tempLabel.style.display = 'none'
         this.selectionData[0] = this.eTargetValue
       })
+      if (this.open && this.properties.RowSource !== '') {
+        Vue.nextTick(() => {
+          this.headWidth = this.comboRef.children[1].children[0].scrollWidth + 'px'
+        })
+      }
     } else {
       return undefined
     }
@@ -1337,6 +1413,12 @@ export default class FDComboBox extends Mixins(FdControlVue) {
   protected get listStyleObj () {
     const controlProp = this.properties
     if (this.properties.RowSource !== '') {
+      let overflowX = ''
+      if (this.itemsRef && this.itemsRef.children[0] && ((this.itemsRef.children[0].scrollWidth - this.itemsRef.children[0].clientWidth) <= 15)) {
+        overflowX = 'none'
+      } else {
+        overflowX = 'auto'
+      }
       return {
         height: !controlProp.ColumnHeads
           ? controlProp.ListRows! > 0 &&
@@ -1348,14 +1430,16 @@ export default class FDComboBox extends Mixins(FdControlVue) {
             ? (controlProp.ListRows! + 1) * (controlProp.Font!.FontSize! + 9) +
             'px'
             : '',
-        backgroundColor: controlProp.BackColor
+        backgroundColor: controlProp.BackColor,
+        overflowX: overflowX,
+        overflowY: 'auto'
       }
     } else {
       return {
         backgroundColor: controlProp.BackColor,
         border: 'none',
-        width: 'calc(100% - 2px)',
-        height: 'calc(100% - 2px)',
+        width: '100%',
+        height: '100%',
         minWidth: '100px'
       }
     }
@@ -1846,7 +1930,6 @@ export default class FDComboBox extends Mixins(FdControlVue) {
   height: 100%;
   background-color: lightgray;
   border: 1px solid gray;
-  overflow: auto;
 }
 .list-outer {
   border: 0.1px solid lightgray;
