@@ -323,18 +323,6 @@ export default class FDPage extends Vue {
     const selected = this.selectedControls[this.userFormId].selected
     const userData = this.userformData[this.userFormId]
     let groupId = ''
-    if (!selected.includes(controlID)) {
-      groupId = userData[controlID].type === 'MultiPage' ? selected[0] : controlID
-      if ('GroupID' in userData[controlID].properties && userData[controlID].properties.GroupID !== '') {
-        groupId = this.userformData[this.userFormId][controlID].properties.GroupID!
-      }
-      if (groupId && !selected.includes(groupId)) {
-        this.selectControl({
-          userFormId: this.userFormId,
-          select: { container: this.getContainerList(groupId), selected: [groupId] }
-        })
-      }
-    }
     const controlType = this.userformData[this.userFormId][controlID].type
     if (type === 'container' && !groupId.startsWith('group')) {
       this.contextMenuType = true
@@ -453,8 +441,8 @@ export default class FDPage extends Vue {
     }
     return containerList.length > 0 ? containerList : [this.userFormId]
   }
-  createGroup (groupId: string) {
-    EventBus.$emit('createGroup', groupId)
+  createGroup (groupObj: IemitGroup) {
+    EventBus.$emit('createGroup', groupObj)
   }
   openTextContextMenu (event: MouseEvent) {
     this.textMenu = true

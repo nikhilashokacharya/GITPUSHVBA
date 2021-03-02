@@ -89,6 +89,7 @@
               :getSizeMode="getSizeMode"
               :getRepeatData="getRepeatData"
               :getPosition="getPosition"
+              :dragSelctorWidthHeight="styleContentObj"
              @deActiveControl="deActControl"
              @dragSelectorControl="dragSelectorControl"
              @addControlObj="addContainerControl"
@@ -1437,7 +1438,13 @@ export default class FDMultiPage extends Mixins(FdContainerVue) {
     }
   }
   pageMouseDown (event: MouseEvent) {
-    if (this.isEditMode) {
+    let editMode: boolean = this.isEditMode
+    if (this.selectedPageID) {
+      EventBus.$emit('getDragSelectorEdit', event, this.selectedPageID, (editmode: boolean) => {
+        editMode = editmode
+      })
+    }
+    if (editMode) {
       event.stopPropagation()
     }
   }

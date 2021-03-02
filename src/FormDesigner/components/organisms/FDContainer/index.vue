@@ -115,6 +115,7 @@ export default class Container extends FDCommonMethod {
   @Prop() getSizeMode: string
   @Prop() getRepeatData: string
   @Prop() getPosition: string
+  @Prop() dragSelctorWidthHeight: Partial<CSSStyleDeclaration>
 
   controlContextMenu: Array<IcontextMenu> = controlContextMenu;
   userformContextMenu: Array<IcontextMenu> = userformContextMenu;
@@ -464,7 +465,7 @@ export default class Container extends FDCommonMethod {
         : [this.currentSelectedGroup]
     return result
   }
-  createGroup (groupObj: any) {
+  createGroup (groupObj: IemitGroup) {
     if (groupObj.containerId === this.containerId) {
       this.groupRef.groupStyle(groupObj.groupId)
     }
@@ -484,13 +485,15 @@ export default class Container extends FDCommonMethod {
     const type = this.propControlData.type
     if (type === 'Userform') {
       return 32
+    } else {
+      return 0
     }
   }
   get dragSelectorStyle () {
     const controlProp = this.propControlData.properties
     const type = this.propControlData.type
-    const ph = type && type === 'Page' ? this.height! : this.propControlData.properties.Height! - this.fitPictureSize!
-    const pw = type && type === 'Page' ? this.width! : this.propControlData.properties.Width!
+    const ph = type && type === 'Page' ? parseInt(this.dragSelctorWidthHeight.height!) : this.propControlData.properties.Height! - this.fitPictureSize!
+    const pw = type && type === 'Page' ? parseInt(this.dragSelctorWidthHeight.width!) : this.propControlData.properties.Width!
     return {
       height: ph + this.updatedDragHeight + 'px',
       width: pw + this.updatedDragWidth + 'px',
@@ -519,8 +522,8 @@ export default class Container extends FDCommonMethod {
   get childDiv () {
     const controlProp = this.propControlData.properties
     const type = this.propControlData.type
-    const ph = type && type === 'Page' ? this.height! : this.propControlData.properties.Height! - this.fitPictureSize!
-    const pw = type && type === 'Page' ? this.width! : this.propControlData.properties.Width!
+    const ph = type && type === 'Page' ? parseInt(this.dragSelctorWidthHeight.height!) : this.propControlData.properties.Height! - this.fitPictureSize!
+    const pw = type && type === 'Page' ? parseInt(this.dragSelctorWidthHeight.width!) : this.propControlData.properties.Width!
     return {
       height: (controlProp.ScrollHeight === 0 || controlProp.ScrollHeight! < ph) ? ph + this.updatedDragHeight + 'px' : controlProp.ScrollHeight! + 'px',
       width: (controlProp.ScrollWidth === 0 || controlProp.ScrollWidth! < pw) ? pw + this.updatedDragWidth + 'px' : controlProp.ScrollWidth! + 'px',
@@ -565,7 +568,7 @@ export default class Container extends FDCommonMethod {
     EventBus.$on('groupDrag', (handler: string) => {
       this.grouphandler = handler
     })
-    EventBus.$on('createGroup', (groupId: string) => {
+    EventBus.$on('createGroup', (groupId: IemitGroup) => {
       this.createGroup(groupId)
     })
     EventBus.$on('updateIsControlMove', (val: boolean) => {

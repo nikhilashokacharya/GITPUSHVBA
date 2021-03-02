@@ -314,64 +314,63 @@ export default class ResizeControl extends FdSelectVue {
         ? this.propControlData.properties.GroupID
         : ''
       const currentSelect = this.selectedControls[this.userFormId].selected
-      if (!(currentSelect.length === 1 && currentSelect[0] === this.controlId)) {
-        if (currentSelect.length > 1 && (currentSelect.includes(this.controlId) || currentSelect.includes(this.userformData[this.userFormId][this.controlId].properties.GroupID!))) {
-          if (currentSelect.includes(this.controlId)) {
-            this.exchangeSelect()
-          } else {
-            if (
-              this.userformData[this.userFormId][this.controlId].properties.GroupID !== ''
-            ) {
-              const selGrpName = this.userformData[this.userFormId][this.controlId].properties.GroupID!
-              this.groupExchange(selGrpName)
-            }
-          }
+      const getContainer = this.getContainerList(this.controlId)
+      if (currentSelect.length > 1 && (currentSelect.includes(this.controlId) || currentSelect.some(item => getContainer.includes(item)) || currentSelect.includes(groupId))) {
+        if (currentSelect.includes(this.controlId) || currentSelect.some(item => getContainer.includes(item))) {
+          this.exchangeSelect()
         } else {
-          let selectTarget = null
-          let currentGroup = ''
-          if (groupId !== '') {
-            let groupDisplay: string = 'none'
-            EventBus.$emit('getGroupDisplay', groupId, (getDisplay: string) => {
-              groupDisplay = getDisplay
-            })
-            console.log('groupDisplay', groupDisplay)
-            if (
-              this.syncCurrentSelectedGroup === groupId &&
+          if (
+            this.userformData[this.userFormId][this.controlId].properties.GroupID !== ''
+          ) {
+            const selGrpName = this.userformData[this.userFormId][this.controlId].properties.GroupID!
+            this.groupExchange(selGrpName)
+          }
+        }
+      } else {
+        let selectTarget = null
+        let currentGroup = ''
+        if (groupId !== '') {
+          let groupDisplay: string = 'none'
+          EventBus.$emit('getGroupDisplay', groupId, (getDisplay: string) => {
+            groupDisplay = getDisplay
+          })
+          console.log('groupDisplay', groupDisplay)
+          if (
+            this.syncCurrentSelectedGroup === groupId &&
             currentSelect[0] === groupId
-            ) {
+          ) {
+            selectTarget = this.controlId
+          } else {
+            let controlGroupId = ''
+            if (!this.previousSel[0].startsWith('group')) {
+              const type = userData[this.previousSel[0]].type
+              if (type === 'Page') {
+                controlGroupId = userData[this.getContainerList(this.previousSel[0])[0]].properties.GroupID!
+              } else {
+                controlGroupId = userData[this.previousSel[0]].properties.GroupID!
+              }
+            }
+            if (groupId === controlGroupId) {
               selectTarget = this.controlId
             } else {
-              let controlGroupId = ''
-              if (!this.previousSel[0].startsWith('group')) {
-                const type = userData[this.previousSel[0]].type
-                if (type === 'Page') {
-                  controlGroupId = userData[this.getContainerList(this.previousSel[0])[0]].properties.GroupID!
-                } else {
-                  controlGroupId = userData[this.previousSel[0]].properties.GroupID!
-                }
-              }
-              if (groupId === controlGroupId) {
-                selectTarget = this.controlId
+              if (groupDisplay === 'none') {
+                selectTarget = groupId
               } else {
-                if (groupDisplay === 'none') {
-                  selectTarget = groupId
-                } else {
-                  selectTarget = this.controlId
-                }
+                selectTarget = this.controlId
               }
             }
-            currentGroup = groupId
-          } else {
-            selectTarget = this.controlId
           }
-          if (!this.selectedContainer.includes(selectTarget) && !currentSelect.includes(selectTarget)) {
-            this.selectControl({
-              userFormId: this.userFormId,
-              select: { container: this.getContainerList(selectTarget), selected: [selectTarget] }
-            })
-          }
-          this.syncCurrentSelectedGroup = currentGroup
+          currentGroup = groupId
+        } else {
+          selectTarget = this.controlId
         }
+        if (!this.selectedContainer.includes(selectTarget) && !currentSelect.includes(selectTarget)) {
+          this.selectControl({
+            userFormId: this.userFormId,
+            select: { container: this.getContainerList(selectTarget), selected: [selectTarget] }
+          })
+        }
+        this.syncCurrentSelectedGroup = currentGroup
       }
     } else if (this.keyType === 'shiftKey') {
       const userData = this.userformData[this.userFormId]
@@ -517,7 +516,7 @@ export default class ResizeControl extends FdSelectVue {
         }
         this.isGroupActive = false
       }
-    } else {
+    } else if (this.selMultipleCtrl) {
       this.selectedItem(event)
     }
     this.actvControl = ''
@@ -525,9 +524,18 @@ export default class ResizeControl extends FdSelectVue {
 
   exchangeSelect () {
     const sel = [...this.selectedControls[this.userFormId].selected]
-    const controlIndex = this.selectedControls[this.userFormId].selected.findIndex((val) => val === this.controlId)
+    const getContainer = this.getContainerList(this.controlId)
+    let controlIndex = -1
+    let commonElemnt = [this.controlId]
+
+    if (sel.includes(this.controlId)) {
+      controlIndex = sel.findIndex((val) => val === this.controlId)
+    } else if (sel.some(item => getContainer.includes(item))) {
+      commonElemnt = sel.filter(item => getContainer.includes(item))
+      controlIndex = sel.findIndex((val) => val === commonElemnt[0])
+    }
     sel.splice(controlIndex, 1)
-    sel.unshift(this.controlId)
+    sel.unshift(commonElemnt[0])
     this.selectControl({
       userFormId: this.userFormId,
       select: { container: this.getContainerList(sel[0]), selected: [...sel] }
@@ -623,6 +631,8 @@ export default class ResizeControl extends FdSelectVue {
   getDragSelectorEdit (event: MouseEvent, containerId: string, callBack: Function) {
     const userData = this.userformData[this.userFormId]
     const selected = this.selectedControls[this.userFormId].selected
+    const getContainer = this.getContainerList(this.controlId)
+    getContainer.pop()
     const selContainer = userData[containerId].type === 'Page' ? this.getContainerList(containerId)[0] : containerId
     if (this.controlId === selContainer && this.selMultipleCtrl !== true) {
       let isSameContainer: boolean = false
@@ -655,7 +665,7 @@ export default class ResizeControl extends FdSelectVue {
               })
             }
           }
-        } else {
+        } else if (!selected.some(item => getContainer.includes(item))) {
           this.isMoving = true
           this.isEditMode = true
           this.selectControl({
@@ -681,12 +691,16 @@ export default class ResizeControl extends FdSelectVue {
     }
   }
   displayContextMenu (event: MouseEvent) {
-    if (this.isEditMode && (this.propControlData.type === 'MultiPage' || this.propControlData.type === 'Frame')) {
-      this.selectControl({
-        userFormId: this.userFormId,
-        select: { container: this.getContainerList(this.controlId), selected: [this.controlId] }
-      })
-      this.isEditMode = false
+    event.preventDefault()
+    this.previousSel = [...this.selectedControls[this.userFormId].selected]
+    if (this.isGroupSelected!) {
+      if (this.isGroupControlelected === '') {
+        this.selectedItem(event)
+      } else {
+        this.selGroupControl(event)
+      }
+    } else {
+      this.selectedItem(event)
     }
     EventBus.$emit('contextMenuDisplay', event, this.containerId, this.controlId, 'control', this.isEditMode)
   }

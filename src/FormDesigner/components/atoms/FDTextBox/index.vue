@@ -524,10 +524,19 @@ export default class FDTextBox extends Mixins(FdControlVue) {
       this.updateAutoSize()
     }
   }
+
+  @Watch('properties.AutoSize')
+  setAutoHeightWidth () {
+    if (this.properties.AutoSize) {
+      this.updateAutoSize()
+      if (this.properties.MultiLine) {
+        this.fitToSizeWhenMultiLine = true
+      }
+    }
+  }
   /**
    * @override
    */
-  @Watch('properties.AutoSize', { deep: true })
   updateAutoSize () {
     if (this.properties.AutoSize === true) {
       this.$nextTick(() => {
