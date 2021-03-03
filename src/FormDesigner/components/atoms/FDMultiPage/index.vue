@@ -152,14 +152,94 @@ export default class FDMultiPage extends Mixins(FdContainerVue) {
   topValue: number = 0;
   widthValue: number = 40;
   rowsCount: string = '';
+  scrollButtonHeight: number = 0;
+  scrollButtonWidth: number = 0;
 
   get scrollButtonStyle () {
     const controlProp = this.properties
     return {
       cursor: this.controlCursor,
-      opacity: this.scrolling ? ((this.scrolling.scrollLeft === (this.scrolling.scrollWidth - this.scrolling.clientWidth)) ? '0.4' : '1') : '1'
+      opacity: this.scrolling ? ((this.scrolling.scrollLeft === (this.scrolling.scrollWidth - this.scrolling.clientWidth)) ? '0.4' : '1') : '1',
+      width: this.setSpinButtonWidth + 'px',
+      height: this.setSpinButtonHeight + 'px'
     }
   }
+  get setSpinButtonWidth () {
+    let spinButtonWidth: number = 0
+    const tabFixedHeight = this.properties.TabFixedHeight!
+    const tabFixedWidth = this.properties.TabFixedWidth!
+    if (this.properties.TabOrientation === 0) {
+      if (tabFixedHeight! > 13 || tabFixedHeight! === 0) {
+        spinButtonWidth = 22
+      } else {
+        if (tabFixedHeight === 4) { spinButtonWidth = 7 } else if (tabFixedHeight === 5) { spinButtonWidth = 8.5 } else if (tabFixedHeight === 6) { spinButtonWidth = 10 } else if (tabFixedHeight === 7) { spinButtonWidth = 11.5 } else if (tabFixedHeight === 8) { spinButtonWidth = 13 } else if (tabFixedHeight === 9) { spinButtonWidth = 14.5 } else if (tabFixedHeight === 10) { spinButtonWidth = 16 } else if (tabFixedHeight === 11) { spinButtonWidth = 17.5 } else if (tabFixedHeight === 12) { spinButtonWidth = 19 } else if (tabFixedHeight === 13) { spinButtonWidth = 20.5 }
+      }
+    } else if (this.properties.TabOrientation === 1) {
+      if (tabFixedHeight! > 22 || tabFixedHeight! === 0) {
+        spinButtonWidth = 22
+      } else {
+        if (tabFixedHeight! < 7) {
+          spinButtonWidth = 7
+        } else {
+          spinButtonWidth = tabFixedHeight
+        }
+      }
+    } else {
+      if (tabFixedWidth! > 13 || tabFixedWidth! === 0) {
+        spinButtonWidth = 22
+      } else {
+        if (tabFixedWidth === 4) { spinButtonWidth = 7 } else if (tabFixedWidth === 5) { spinButtonWidth = 8.5 } else if (tabFixedWidth === 6) { spinButtonWidth = 10 } else if (tabFixedWidth === 7) { spinButtonWidth = 11.5 } else if (tabFixedWidth === 8) { spinButtonWidth = 13 } else if (tabFixedWidth === 9) { spinButtonWidth = 14.5 } else if (tabFixedWidth === 10) { spinButtonWidth = 16 } else if (tabFixedWidth === 11) { spinButtonWidth = 17.5 } else if (tabFixedWidth === 12) { spinButtonWidth = 19 } else if (tabFixedWidth === 13) { spinButtonWidth = 20.5 }
+      }
+    }
+    this.scrollButtonWidth = spinButtonWidth
+    return spinButtonWidth
+  }
+
+  get setSpinButtonHeight () {
+    let spinButtonHeight: number = 0
+    const tabFixedHeight = this.properties.TabFixedHeight!
+    const tabFixedWidth = this.properties.TabFixedWidth!
+    if (this.properties.TabOrientation === 0) {
+      if (tabFixedHeight! > 13 || tabFixedHeight! === 0) {
+        spinButtonHeight = 18
+      } else {
+        if (tabFixedHeight === 4) { spinButtonHeight = 8 } else if (tabFixedHeight === 5) { spinButtonHeight = 9 } else if (tabFixedHeight === 6) { spinButtonHeight = 10 } else if (tabFixedHeight === 7) { spinButtonHeight = 11 } else if (tabFixedHeight === 8) { spinButtonHeight = 12 } else if (tabFixedHeight === 9) { spinButtonHeight = 13 } else if (tabFixedHeight === 10) { spinButtonHeight = 14 } else if (tabFixedHeight === 11) { spinButtonHeight = 15 } else if (tabFixedHeight === 12) { spinButtonHeight = 16 } else if (tabFixedHeight === 13) { spinButtonHeight = 17 }
+      }
+    } else if (this.properties.TabOrientation === 1) {
+      if (tabFixedHeight! >= 22 || tabFixedHeight! === 0) {
+        spinButtonHeight = 18
+      } else {
+        if (tabFixedHeight! < 8) {
+          spinButtonHeight = 8
+        } else if (tabFixedHeight! === 21) {
+          spinButtonHeight = 17.5
+        } else if (tabFixedHeight! === 20) {
+          spinButtonHeight = 17
+        } else if (tabFixedHeight! === 19) {
+          spinButtonHeight = 16.5
+        } else if (tabFixedHeight! === 18) {
+          spinButtonHeight = 16
+        } else if (tabFixedHeight! === 17) {
+          spinButtonHeight = 15.5
+        } else if (tabFixedHeight! === 16) {
+          spinButtonHeight = 15
+        } else if (tabFixedHeight! === 15) {
+          spinButtonHeight = 14.5
+        } else {
+          spinButtonHeight = tabFixedHeight
+        }
+      }
+    } else {
+      if (tabFixedWidth! > 13 || tabFixedWidth! === 0) {
+        spinButtonHeight = 18
+      } else {
+        if (tabFixedWidth === 4) { spinButtonHeight = 8 } else if (tabFixedWidth === 5) { spinButtonHeight = 9 } else if (tabFixedWidth === 6) { spinButtonHeight = 10 } else if (tabFixedWidth === 7) { spinButtonHeight = 11 } else if (tabFixedWidth === 8) { spinButtonHeight = 12 } else if (tabFixedWidth === 9) { spinButtonHeight = 13 } else if (tabFixedWidth === 10) { spinButtonHeight = 14 } else if (tabFixedWidth === 11) { spinButtonHeight = 15 } else if (tabFixedWidth === 12) { spinButtonHeight = 16 } else if (tabFixedWidth === 13) { spinButtonHeight = 17 }
+      }
+    }
+    this.scrollButtonHeight = spinButtonHeight
+    return spinButtonHeight
+  }
+
   /**
    * @description sets scrollbar left and top position
    * @function scrollLeftTop
@@ -331,9 +411,9 @@ export default class FDMultiPage extends Mixins(FdContainerVue) {
       zIndex: '3',
       marginTop:
         controlProp.TabOrientation === 2 || controlProp.TabOrientation === 3
-          ? `${controlProp.Height! - 30}px`
+          ? `${controlProp.Height! - (this.scrollButtonWidth) - 10}px`
           : controlProp.TabOrientation === 1
-            ? `${controlProp.Height! - 22}px`
+            ? controlProp.TabFixedHeight! > 0 ? `${controlProp.Height! - this.scrollButtonHeight - 3}px` : `${controlProp.Height! - 22}px`
             : '0px',
       transform:
         controlProp.TabOrientation === 2
@@ -346,9 +426,9 @@ export default class FDMultiPage extends Mixins(FdContainerVue) {
         : 'none',
       right:
         controlProp.TabOrientation === 3
-          ? '-14px'
+          ? controlProp.TabFixedWidth! > 9 ? '-10px' : controlProp.TabFixedWidth! > 0 && controlProp.TabFixedWidth! < 10 ? '-6px' : '-14px'
           : controlProp.TabOrientation === 2
-            ? `${controlProp.Width! - 40}px`
+            ? controlProp.TabFixedWidth! > 0 ? `${controlProp.Width! - this.scrollButtonHeight - 14}px` : `${controlProp.Width! - 32}px`
             : '0px',
       top: '0px',
       backgroundColor: 'rgb(238, 238, 238)'
@@ -812,8 +892,8 @@ export default class FDMultiPage extends Mixins(FdContainerVue) {
                     : '33px'
               : '0px'
           : '0px',
-      height: (parseInt(height) - 3) + 'px',
-      width: width,
+      height: controlProp.TabOrientation === 1 ? (parseInt(height) + 5) + 'px' : (parseInt(height) - 3) + 'px',
+      width: controlProp.TabOrientation === 3 ? (parseInt(width) + 4) + 'px' : width,
       left:
         controlProp.Style !== 2
           ? controlProp.Style === 1 ? controlProp.TabOrientation === 2
