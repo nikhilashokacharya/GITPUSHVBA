@@ -666,7 +666,8 @@ export class ControlPropertyData {
               Accelerator: ''
             }
           ],
-          zIndex: -1
+          zIndex: -1,
+          tabDataLength: 2
         },
         type: 'TabStrip'
       },

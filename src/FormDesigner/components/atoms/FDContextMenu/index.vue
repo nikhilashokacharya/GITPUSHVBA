@@ -311,6 +311,7 @@ export default class ContextMenu extends FDCommonMethod {
       const tabControlData = JSON.parse(
         JSON.stringify(this.userformData[this.userFormId][this.controlId])
       ).extraDatas.Tabs
+      const tabLength = this.userformData[this.userFormId][this.controlId].extraDatas!.tabDataLength!
       let prevTabId = -1
       const initialTabData: tabsItems = {
         Name: '',
@@ -318,21 +319,8 @@ export default class ContextMenu extends FDCommonMethod {
         ToolTip: '',
         Accelerator: ''
       }
-      if (tabControlData.length > 0) {
-        for (let i = 0; i < tabControlData.length; i++) {
-          const id = tabControlData[i].Name.split('Tab').pop() || '-1'
-          const parseId = parseInt(id, 10)
-          if (!isNaN(parseId) && prevTabId < parseId) {
-            prevTabId = parseId
-          }
-        }
-        prevTabId += 1
-        initialTabData.Name = `Tab${prevTabId}`
-        initialTabData.Caption = `Tab${prevTabId}`
-      } else {
-        initialTabData.Name = `Tab${1}`
-        initialTabData.Caption = `Tab${1}`
-      }
+      initialTabData.Name = `Tab${tabLength + 1}`
+      initialTabData.Caption = `Tab${tabLength + 1}`
       tabControlData.push(initialTabData)
       this.updateControlExtraData({
         userFormId: this.userFormId,
@@ -345,6 +333,12 @@ export default class ContextMenu extends FDCommonMethod {
         controlId: this.controlId,
         propertyName: 'Value',
         value: tabControlData.length - 1
+      })
+      this.updateControlExtraData({
+        userFormId: this.userFormId,
+        controlId: this.controlId,
+        propertyName: 'tabDataLength',
+        value: tabLength! + 1
       })
     } else if (type === 'MultiPage') {
       const parentId = this.controlId.split('MultiPage').pop()

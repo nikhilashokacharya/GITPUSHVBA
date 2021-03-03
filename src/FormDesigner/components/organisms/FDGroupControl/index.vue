@@ -704,14 +704,6 @@ export default class GroupControl extends FDCommonMethod {
     EventBus.$emit('groupDrag', 'NotDrag')
     EventBus.$emit('endMoveControl', 'groupEndMove')
     EventBus.$emit('endGroupMoveControl')
-    if (handler === 'drag') {
-      const selected = this.selectedControls[this.userFormId].selected
-      for (const grpname in selected) {
-        if (selected[grpname].startsWith('group')) {
-          this.groupStyle(selected[grpname])
-        }
-      }
-    }
     for (const controlGroup in this.divStyleArray) {
       const groupName = this.divStyleArray[controlGroup].groupName!
       if (groupName.startsWith('group')) {

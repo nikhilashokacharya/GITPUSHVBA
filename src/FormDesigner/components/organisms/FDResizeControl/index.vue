@@ -123,7 +123,7 @@ export default class ResizeControl extends FdSelectVue {
   isGroupActive: boolean = false
   actvControl: string = ''
 
-  selGroupControl (event: MouseEvent) {
+  contextSelGroupControl (event: MouseEvent) {
     let selectTarget = ''
     const userData = this.userformData[this.userFormId]
     let groupId = this.isGroupControlelected!
@@ -139,7 +139,47 @@ export default class ResizeControl extends FdSelectVue {
     }
     if (groupDisplay === 'none') {
       selectTarget = groupId
-    } else if (!this.previousSel.includes(groupControlId)) {
+    } else {
+      console.log('controlid', this.controlId)
+      let getContainer = this.getContainerList(this.controlId)[0]
+      getContainer = userData[getContainer].type === 'Page' ? this.getContainerList(getContainer)[0] : getContainer
+      let getConatinerEditMode: boolean = false
+      if (userData[getContainer].type !== 'Userform') {
+        EventBus.$emit('getEditModeOfContainer', getContainer, (editMode: boolean) => {
+          getConatinerEditMode = editMode
+        })
+        if (getConatinerEditMode) {
+          this.selectedItem(event)
+        }
+      }
+    }
+    if (selectTarget !== '') {
+      this.selectControl({
+        userFormId: this.userFormId,
+        select: { container: this.getContainerList(selectTarget), selected: [selectTarget] }
+      })
+    }
+  }
+
+  selGroupControl (event: MouseEvent) {
+    let selectTarget = ''
+    const userData = this.userformData[this.userFormId]
+    let groupId = this.isGroupControlelected!
+    const seletced = this.getSelectedControlsDatas!
+    const container = this.selectedControls[this.userFormId].container
+    const containerList = [...this.getContainerList(this.controlId)]
+    const findIndex = containerList.findIndex(val => userData[val].properties.GroupID === groupId)
+    let groupControlId: string = ''
+    let groupDisplay: string = 'none'
+    if (findIndex !== -1) {
+      groupControlId = containerList[findIndex]
+      EventBus.$emit('getGroupDisplay', groupId, (getDisplay: string) => {
+        groupDisplay = getDisplay
+      })
+    }
+    if (groupDisplay === 'none') {
+      selectTarget = groupId
+    } else if (!this.previousSel.includes(groupControlId) && !seletced.includes(groupControlId) && !container.includes(groupControlId)) {
       selectTarget = groupControlId
     }
     if (selectTarget !== '') {
@@ -619,12 +659,18 @@ export default class ResizeControl extends FdSelectVue {
       this.isMoveWhenMouseDown = val
     })
     EventBus.$on('getDragSelectorEdit', this.getDragSelectorEdit)
+    EventBus.$on('getEditModeOfContainer', this.getEditModeOfContainer)
   }
   getEditMode (callBack: Function) {
     const selected = this.selectedControls[this.userFormId].selected
     const userData = this.userformData[this.userFormId]
     const mainSel = userData[selected[0]].type === 'Page' ? this.getContainerList(selected[0])[0] : selected[0]
     if (mainSel === this.controlId) {
+      callBack(this.isEditMode)
+    }
+  }
+  getEditModeOfContainer (controlId: string, callBack: Function) {
+    if (controlId === this.controlId) {
       callBack(this.isEditMode)
     }
   }
@@ -693,14 +739,18 @@ export default class ResizeControl extends FdSelectVue {
   displayContextMenu (event: MouseEvent) {
     event.preventDefault()
     this.previousSel = [...this.selectedControls[this.userFormId].selected]
-    if (this.isGroupSelected!) {
-      if (this.isGroupControlelected === '') {
-        this.selectedItem(event)
-      } else {
-        this.selGroupControl(event)
-      }
-    } else {
+    if (this.isGroupControlelected === '') {
       this.selectedItem(event)
+    } else {
+      const currentSelect = this.selectedControls[this.userFormId].selected
+      const getContainer = this.getContainerList(this.controlId)
+      if (currentSelect.length > 1 && (currentSelect.includes(this.controlId) || currentSelect.some(item => getContainer.includes(item)) || currentSelect.includes(this.isGroupControlelected!))) {
+        if (currentSelect.includes(this.controlId) || currentSelect.some(item => getContainer.includes(item))) {
+          this.exchangeSelect()
+        }
+      } else {
+        this.contextSelGroupControl(event)
+      }
     }
     EventBus.$emit('contextMenuDisplay', event, this.containerId, this.controlId, 'control', this.isEditMode)
   }
