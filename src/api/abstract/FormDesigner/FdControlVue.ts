@@ -868,6 +868,40 @@ topIndexCheck (newVal:number, oldVal:number) {
   }
 }
 
+@Watch('isEditMode', { immediate: false })
+callingImage () {
+  this.pictureSize()
+}
+
+imageView () {
+  const picPosLeftRight = [0, 1, 2, 3, 4, 5]
+  if (this.textSpanRef) {
+    if (this.properties.Width! <= this.imageRef.naturalWidth! && picPosLeftRight.includes(this.properties.PicturePosition!)) {
+      this.textSpanRef.style.display = 'none'
+      this.imageRef.parentElement!.style.alignSelf = ''
+    } else if (this.properties.Width! > this.imageRef.naturalWidth! && picPosLeftRight.includes(this.properties.PicturePosition!)) {
+      this.imageRef.parentElement!.style.alignSelf = 'center'
+      this.textSpanRef.style.display = 'flex'
+      document.removeEventListener('keypress', this.onKeyPress)
+    }
+  }
+  if (this.editableTextRef) {
+    const el = this.editableTextRef.$el as HTMLSpanElement
+    if (this.properties.Width! <= this.imageRef.naturalWidth && picPosLeftRight.includes(this.properties.PicturePosition!)) {
+      el.style.display = 'none'
+      this.imageRef.parentElement!.style.alignSelf = ''
+      document.addEventListener('keypress', this.onKeyPress)
+    } else if (this.properties.Width! > this.imageRef.naturalWidth && picPosLeftRight.includes(this.properties.PicturePosition!)) {
+      this.imageRef.parentElement!.style.alignSelf = 'center'
+      el.style.display = 'flex'
+      document.removeEventListener('keypress', this.onKeyPress)
+    }
+  }
+}
+onKeyPress (e: KeyboardEvent) {
+  this.updateCaption(this.properties.Caption + e.key)
+}
+
 /**
  * @description updates the dataModel listBox object properties when user clicks
  * @function handleMultiSelect
@@ -1577,6 +1611,7 @@ pictureSize () {
         this.imageRef.scrollIntoView(true)
       }
       imgStyle.filter = !this.properties.Enabled ? 'sepia(0) grayscale(1) blur(3px) opacity(0.2)' : ''
+      this.imageView()
     })
   }
   this.imageProperty = imgStyle
