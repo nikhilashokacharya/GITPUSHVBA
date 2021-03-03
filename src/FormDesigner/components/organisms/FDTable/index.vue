@@ -21,6 +21,8 @@
         @updateAppearance="updateAppearance"
         @emitFont="emitFont"
         @colorPaletteProp="colorPaletteProp"
+        :userFormId="userFormId"
+        :getSelectedControlsDatas="getSelectedControlsDatas"
       />
     </div>
   </div>

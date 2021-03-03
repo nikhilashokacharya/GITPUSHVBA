@@ -196,6 +196,16 @@ interface font {
   FontStyle?: string
 }
 
+interface fontString {
+  FontName: string,
+  FontSize?: number,
+  FontBold?: string,
+  FontItalic?: string,
+  FontUnderline?: string,
+  FontStrikethrough?: string,
+  FontStyle?: string
+}
+
 interface IResizeValueSample
 {
   X: number

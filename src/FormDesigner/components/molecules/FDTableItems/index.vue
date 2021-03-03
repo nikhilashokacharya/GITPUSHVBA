@@ -24,7 +24,9 @@
       />
       <CustomFontDialog
         v-if="propertyType === 'font'"
+        :userFormId="userFormId"
         :propertyData="controlPropertyData"
+        :getSelectedControlsDatas="getSelectedControlsDatas"
         :propertyName="propertyName"
         @emitFont="emitFont"
 
@@ -49,8 +51,10 @@ import CustomFontDialog from '../../organisms/FDCustomFontDialog/index.vue'
   }
 })
 export default class FDTableItems extends Vue {
- @Prop({}) controlPropertyData! : tableData
+  @Prop({}) controlPropertyData! : tableData
   @Prop({ default: 'default' }) propertyName!: string
+  @Prop({ required: true, type: String }) public readonly userFormId! : string
+  @Prop({ required: true }) public readonly getSelectedControlsDatas: any
 
   get propertyType () {
     return this.controlPropertyData.type
