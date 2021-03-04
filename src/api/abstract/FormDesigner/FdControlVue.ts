@@ -875,7 +875,7 @@ callingImage () {
 
 imageView () {
   const picPosLeftRight = [0, 1, 2, 3, 4, 5]
-  if (this.textSpanRef) {
+  if (this.textSpanRef && this.imageRef && this.imageRef.parentElement) {
     if (this.properties.Width! <= this.imageRef.naturalWidth! && picPosLeftRight.includes(this.properties.PicturePosition!)) {
       this.textSpanRef.style.display = 'none'
       this.imageRef.parentElement!.style.alignSelf = ''
@@ -885,7 +885,7 @@ imageView () {
       document.removeEventListener('keypress', this.onKeyPress)
     }
   }
-  if (this.editableTextRef) {
+  if (this.editableTextRef && this.imageRef && this.imageRef.parentElement) {
     const el = this.editableTextRef.$el as HTMLSpanElement
     if (this.properties.Width! <= this.imageRef.naturalWidth && picPosLeftRight.includes(this.properties.PicturePosition!)) {
       el.style.display = 'none'
@@ -1605,13 +1605,15 @@ pictureSize () {
   }
   if (this.properties.Picture) {
     Vue.nextTick(() => {
-      imgStyle.width = this.properties.Width! <= this.imageRef!.naturalWidth ? `${this.properties.Width}px` : 'fit-content'
-      imgStyle.height = this.properties.Height! <= this.imageRef!.naturalHeight ? `${this.properties.Height}px` : 'fit-content'
-      if (this.properties.PicturePosition === 9 || this.properties.PicturePosition === 10 || this.properties.PicturePosition === 11) {
-        this.imageRef.scrollIntoView(true)
+      if (this.imageRef) {
+        imgStyle.width = this.properties.Width! <= this.imageRef!.naturalWidth ? `${this.properties.Width}px` : 'fit-content'
+        imgStyle.height = this.properties.Height! <= this.imageRef!.naturalHeight ? `${this.properties.Height}px` : 'fit-content'
+        if (this.properties.PicturePosition === 9 || this.properties.PicturePosition === 10 || this.properties.PicturePosition === 11) {
+          this.imageRef.scrollIntoView(true)
+        }
+        imgStyle.filter = !this.properties.Enabled ? 'sepia(0) grayscale(1) blur(4px)' : ''
+        this.imageView()
       }
-      imgStyle.filter = !this.properties.Enabled ? 'sepia(0) grayscale(1) blur(4px)' : ''
-      this.imageView()
     })
   }
   this.imageProperty = imgStyle
