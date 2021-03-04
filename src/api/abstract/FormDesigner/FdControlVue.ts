@@ -1610,7 +1610,7 @@ pictureSize () {
       if (this.properties.PicturePosition === 9 || this.properties.PicturePosition === 10 || this.properties.PicturePosition === 11) {
         this.imageRef.scrollIntoView(true)
       }
-      imgStyle.filter = !this.properties.Enabled ? 'sepia(0) grayscale(1) blur(3px) opacity(0.2)' : ''
+      imgStyle.filter = !this.properties.Enabled ? 'sepia(0) grayscale(1) blur(4px)' : ''
       this.imageView()
     })
   }
