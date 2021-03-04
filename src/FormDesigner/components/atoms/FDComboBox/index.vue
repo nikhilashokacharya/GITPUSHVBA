@@ -62,8 +62,9 @@
         :style="selectedStyleObj"
         @mouseover="updateMouseCursor"
       >
-        <div v-if="properties.DropButtonStyle === 1">
+        <div v-if="properties.DropButtonStyle === 1" :style="arrowButtonStyleObj" >
           <svg
+            class="svgStyleObj"
             version="1.0"
             xmlns="http://www.w3.org/2000/svg"
             height="10"
@@ -90,8 +91,9 @@
             </g>
           </svg>
         </div>
-        <div v-else-if="properties.DropButtonStyle === 2">
+        <div v-else-if="properties.DropButtonStyle === 2" :style="ellipsesAndReduceButtonStyleObj">
           <svg
+            class="svgStyleObj"
             version="1.0"
             xmlns="http://www.w3.org/2000/svg"
             width="12"
@@ -131,8 +133,9 @@
             </g>
           </svg>
         </div>
-        <div v-else-if="properties.DropButtonStyle === 3">
+        <div v-else-if="properties.DropButtonStyle === 3" :style="ellipsesAndReduceButtonStyleObj">
           <svg
+            class="svgStyleObj"
             version="1.0"
             xmlns="http://www.w3.org/2000/svg"
             width="12"
@@ -318,6 +321,18 @@ export default class FDComboBox extends Mixins(FdControlVue) {
   controlZIndex: number = -1;
   newColumnWidthsValue: string = '';
 
+  get arrowButtonStyleObj () {
+    return {
+      width: '10px',
+      height: '12.4px'
+    }
+  }
+  get ellipsesAndReduceButtonStyleObj () {
+    return {
+      width: '12px',
+      height: '14.4px'
+    }
+  }
   get checkBothEnabledAndLocked () {
     if (this.properties.Enabled) {
       if (this.properties.Locked) {
@@ -436,22 +451,31 @@ export default class FDComboBox extends Mixins(FdControlVue) {
               if (this.properties.ColumnCount === 1) {
                 c.style.height = b + 'px'
                 c.style.overflowX = 'hidden'
+                c.style.overflowY = 'auto'
+              } else if (this.properties.ListRows! === 0 || this.properties.ListRows! === this.extraDatas.RowSourceData!.length) {
+                c.style.height = b + 15 + 'px'
+                c.style.overflowX = 'scroll'
+                c.style.overflowY = 'hidden'
               } else {
                 c.style.height = b + 15 + 'px'
                 c.style.overflowX = 'scroll'
+                c.style.overflowY = 'auto'
               }
             } else {
               c.style.height = b + 'px'
               c.style.overflowX = 'hidden'
+              c.style.overflowY = 'auto'
             }
           } else {
             let b = a.offsetHeight * this.properties.ListRows!
             if (c.scrollWidth > c.clientWidth) {
               c.style.height = b + 15 + 'px'
               c.style.overflowX = 'scroll'
+              c.style.overflowY = 'auto'
             } else {
               c.style.height = b + 'px'
               c.style.overflowX = 'hidden'
+              c.style.overflowY = 'auto'
             }
           }
         })
@@ -467,24 +491,33 @@ export default class FDComboBox extends Mixins(FdControlVue) {
               if (c.scrollWidth > c.clientWidth) {
                 c.style.height = (b + 15) + this.itemsRef.children[0].children[0].children[0].clientHeight + 'px'
                 if (this.properties.ColumnCount === 1) {
-                  c.style.height = b + 'px'
+                  c.style.height = b + this.itemsRef.children[0].children[0].children[0].clientHeight + 'px'
                   c.style.overflowX = 'hidden'
-                } else {
-                  c.style.height = b + 15 + 'px'
+                  c.style.overflowY = 'auto'
+                } else if (this.properties.ListRows! === 0 || this.properties.ListRows! === this.extraDatas.RowSourceData!.length) {
+                  c.style.height = b + this.itemsRef.children[0].children[0].children[0].clientHeight + 15 + 'px'
                   c.style.overflowX = 'scroll'
+                  c.style.overflowY = 'hidden'
+                } else {
+                  c.style.height = b + this.itemsRef.children[0].children[0].children[0].clientHeight + 15 + 'px'
+                  c.style.overflowX = 'scroll'
+                  c.style.overflowY = 'auto'
                 }
               } else {
                 c.style.height = b + this.itemsRef.children[0].children[0].children[0].clientHeight + 'px'
                 c.style.overflowX = 'hidden'
+                c.style.overflowY = 'auto'
               }
             } else {
               let b = a.offsetHeight * this.properties.ListRows!
               if (c.scrollWidth > c.clientWidth) {
                 c.style.height = (b + 15) + this.itemsRef.children[0].children[0].children[0].clientHeight + 'px'
                 c.style.overflowX = 'scroll'
+                c.style.overflowY = 'auto'
               } else {
                 c.style.height = b + this.itemsRef.children[0].children[0].children[0].clientHeight + 'px'
                 c.style.overflowX = 'hidden'
+                c.style.overflowY = 'auto'
               }
             }
           })
@@ -2047,5 +2080,8 @@ export default class FDComboBox extends Mixins(FdControlVue) {
 .bar {
   font-size: 13px;
   color: black;
+}
+.svgStyleObj {
+  position: absolute;
 }
 </style>
