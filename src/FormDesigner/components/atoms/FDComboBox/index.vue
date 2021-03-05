@@ -203,17 +203,18 @@
                   v-if="properties.RowSource === '' && properties.ColumnCount !== -1"
                   :style="emptyColHeads"
                 >
-                <div v-if="properties.ListStyle === 1" :style="{display:'inline-block', width:'20px'}">
-                  <span class="bar" :style="{float:'right', color: properties.ForeColor}">|</span>
+                <div v-if="properties.ListStyle === 1" :style="{display:'inline-block', width:'20px',height: (emptyColHeadsHeight - 1) + 'px'}">
                 </div>
-                <div v-for="(a, i) in properties.ColumnCount" :key="i" :style="{display:'inline-block', width:'100px'}">
-                  <span v-if="a>1" class="bar" :key="i" :style="{color: properties.ForeColor}">|</span>
+                <template v-for="(a, i) in properties.ColumnCount">
+                <div :key="i" :style="{display:'inline-block', width:'100px',height: (emptyColHeadsHeight - 1) + 'px', borderLeft: properties.ColumnCount === 1 ? '' : '1px solid ' + properties.ForeColor}">
                 </div>
+                </template>
                 </div>
-                <div v-else-if="properties.ColumnCount === -1 && properties.RowSource === ''">
-                <div v-for="i in 10" :key="i" :style="{display:'inline-block', width:'100px'}">
-                  <span v-if="i < 10" class="bar" :style="{ float: 'right', color: properties.ForeColor}" :key="i">|</span>
+                <div v-else-if="properties.ColumnCount === -1 && properties.RowSource === ''" :style="emptyColHeads">
+                <template v-for="i in 10">
+                <div :key="i" :style="{display:'inline-block', width:'100px',height: (emptyColHeadsHeight - 1) + 'px', borderLeft: '1px solid ' + properties.ForeColor}">
                 </div>
+                </template>
                 </div>
                 <hr v-if="properties.ColumnHeads" class="hrStyle" :style="hrStyleObj"/>
               </div>
@@ -286,7 +287,6 @@
 import {
   Component,
   Vue,
-  Prop,
   Mixins,
   Watch,
   Ref
@@ -306,6 +306,7 @@ export default class FDComboBox extends Mixins(FdControlVue) {
   @Ref('trRef') trRef!: HTMLDivElement[];
 
   private tabindex = 0;
+  emptyColHeadsHeight = 0;
   eTargetValue: string = '';
   tempArray: Array<Array<string>> = [];
   open: boolean = false;
@@ -429,6 +430,9 @@ export default class FDComboBox extends Mixins(FdControlVue) {
     if (this.open) {
       this.updateDataModelExtraData({ propertyName: 'zIndex', value: -1 })
       this.listHeightValue()
+      if (this.properties.RowSource === '') {
+        this.updateEmptyColumnHeight()
+      }
     } else {
       this.updateDataModelExtraData({ propertyName: 'zIndex', value: this.controlZIndex })
     }
@@ -437,6 +441,18 @@ export default class FDComboBox extends Mixins(FdControlVue) {
         this.headWidth = this.comboRef.children[1].children[0].scrollWidth + 'px'
       })
     }
+  }
+
+  updateEmptyColumnHeight () {
+    Vue.nextTick(() => {
+      if (this.itemsRef) {
+        if (!this.properties.ColumnHeads) {
+          this.itemsRef.style.height = this.emptyColHeadsHeight + 'px'
+        } else {
+          this.itemsRef.style.height = (this.emptyColHeadsHeight * 2) + 'px'
+        }
+      }
+    })
   }
 
   listHeightValue () {
@@ -1096,8 +1112,10 @@ export default class FDComboBox extends Mixins(FdControlVue) {
   }
 
   get emptyColHeads () {
+    const font = this.properties.Font
+    this.emptyColHeadsHeight = font!.FontSize! + 10
     return {
-      height: '15px'
+      height: (this.emptyColHeadsHeight - 1) + 'px'
     }
   }
   updateColumnValue (index: number) {
@@ -1137,6 +1155,8 @@ export default class FDComboBox extends Mixins(FdControlVue) {
 
   @Watch('properties.Font.FontSize', { deep: true })
   autoSizeValidateOnFontChange () {
+    const font = this.properties.Font
+    this.emptyColHeadsHeight = font!.FontSize! + 10
     if (this.properties.AutoSize) {
       this.updateAutoSize()
     }
@@ -1694,6 +1714,8 @@ export default class FDComboBox extends Mixins(FdControlVue) {
         this.updateDataModel({ propertyName: 'TopIndex', value: 0 })
       }
     }
+    const font = this.properties.Font
+    this.emptyColHeadsHeight = font!.FontSize! + 10
   }
 
   @Watch('properties.ControlSource', { deep: true })
@@ -1826,8 +1848,8 @@ export default class FDComboBox extends Mixins(FdControlVue) {
         controlProp.RowSource !== ''
           ? ''
           : controlProp.ColumnHeads
-            ? '30px'
-            : '15px',
+            ? (this.emptyColHeadsHeight * 2) + 'px'
+            : this.emptyColHeadsHeight + 'px',
       border: controlProp.RowSource !== '' ? '1px solid black' : '1px solid black',
       cursor: this.controlCursor,
       position: 'absolute',
