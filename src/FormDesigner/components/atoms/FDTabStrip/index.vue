@@ -304,6 +304,13 @@ export default class FDTabStrip extends FdControlVue {
       bottomTopStyle = { [a[1]]: '0px' }
     }
     this.setScrollLeft()
+    if (this.scrolling) {
+      Vue.nextTick(() => {
+        if (this.properties.MultiRow) {
+          this.scrolling.scrollLeft = 0
+        }
+      })
+    }
     return {
       ...bottomTopStyle,
       position: this.setPosition,
@@ -526,6 +533,14 @@ export default class FDTabStrip extends FdControlVue {
         this.setPosition = 'absolute'
         this.updateDataModel({ propertyName: 'MultiRow', value: false })
         this.updateDataModel({ propertyName: 'MultiRow', value: true })
+        if (this.scrolling) {
+          if (this.properties.MultiRow) {
+            this.scrolling.scrollLeft = 0
+          }
+        }
+        Vue.nextTick(() => {
+          this.updateTabsWidth()
+        })
       }
     }
   }
@@ -541,8 +556,14 @@ export default class FDTabStrip extends FdControlVue {
         this.updateDataModel({ propertyName: 'Height', value: this.properties.Height! - 1 })
         this.topValue = this.scrolling.offsetHeight!
         this.widthValue = this.scrolling.clientWidth
+        this.updateTabsWidth()
       })
     }
+  }
+
+  @Watch('properties.Style')
+  handleStyleChange () {
+    this.updateTabsWidth()
   }
 
   @Watch('properties.TabFixedHeight')
@@ -556,6 +577,7 @@ export default class FDTabStrip extends FdControlVue {
         this.updateDataModel({ propertyName: 'Height', value: this.properties.Height! - 1 })
         this.topValue = this.scrolling.offsetHeight!
         this.widthValue = this.scrolling.clientWidth
+        this.updateTabsWidth()
       })
     }
   }
@@ -799,6 +821,7 @@ export default class FDTabStrip extends FdControlVue {
         Vue.nextTick(() => {
           this.topValue = this.scrolling.offsetHeight!
           this.widthValue = this.scrolling.clientWidth
+          this.updateTabsWidth()
         })
       }
       const initialLength = this.extraDatas.Tabs!.length!
@@ -821,6 +844,151 @@ export default class FDTabStrip extends FdControlVue {
     }
   }
 
+  updateTabsWidth () {
+    if (this.properties.MultiRow) {
+      if (this.properties.TabOrientation === 0 || this.properties.TabOrientation === 1) {
+        if (this.properties.Style === 0) {
+          if (this.properties.TabFixedWidth === 0) {
+            if (this.scrolling && this.scrolling.children && this.scrolling.children[0] && this.scrolling.children[0].children[0] && this.scrolling.children[0].children[0].children[1] && this.scrolling.children[0].children[0].children[1].children[0]) {
+              const move = this.scrolling as HTMLDivElement
+              const moveChild = this.scrolling.children[0] as HTMLDivElement
+              for (let index = 0; index < move.children.length; index++) {
+                const a = move.children[index].children[0].children[1] as HTMLDivElement
+                a.style.paddingLeft = '5px'
+                a.style.paddingRight = '5px'
+              }
+              if (move.offsetHeight > (moveChild.offsetHeight + 1)) {
+                let numberOfRows = Math.ceil(move.offsetHeight / (moveChild.offsetHeight + 1))
+                let tabIndexValue = 0
+                let currentTabsWidth = 0
+                let rowWidth = 0
+                for (let i = 0; i < numberOfRows; i++) {
+                  currentTabsWidth = 0
+                  for (let j = tabIndexValue; j < move.children.length; j++) {
+                    const a = move.children[j].children[0].children[1] as HTMLDivElement
+                    const childElement = move.children[j].children[0].children[1].children[0] as HTMLSpanElement
+                    if (i !== numberOfRows - 1) {
+                      currentTabsWidth += (childElement.clientWidth + parseInt(a.style.paddingLeft) + parseInt(a.style.paddingRight) + 2)
+                    }
+                    if (currentTabsWidth > this.properties.Width!) {
+                      rowWidth = currentTabsWidth - (childElement.clientWidth + parseInt(a.style.paddingLeft) + parseInt(a.style.paddingRight) + 2)
+                      if (rowWidth !== 0) {
+                        for (let k = tabIndexValue; k < j; k++) {
+                          if (k === (j - 1)) {
+                            const extraWidth = (this.properties.Width! - rowWidth) / (j - tabIndexValue)
+                            for (let l = tabIndexValue; l <= k; l++) {
+                              const a = this.scrolling.children[l].children[0].children[1] as HTMLDivElement
+                              a.style.paddingLeft = parseInt(a.style.paddingLeft) + (extraWidth / 2) - 0.5 + 'px'
+                              a.style.paddingRight = parseInt(a.style.paddingRight) + (extraWidth / 2) - 0.5 + 'px'
+                            }
+                          }
+                        }
+                        tabIndexValue = j
+                        currentTabsWidth = 0
+                      } else {
+                        tabIndexValue = j + 1
+                        currentTabsWidth = 0
+                      }
+                      break
+                    } else if (i === numberOfRows - 1) {
+                      const a = move.children[j].children[0].children[1] as HTMLDivElement
+                      const childElement = move.children[j].children[0].children[1].children[0] as HTMLSpanElement
+                      currentTabsWidth += (childElement.clientWidth + parseInt(a.style.paddingLeft) + parseInt(a.style.paddingRight) + 2)
+                      if (j === move.children.length - 1) {
+                        for (let k = tabIndexValue; k <= j; k++) {
+                          const extraWidth = (this.properties.Width! - currentTabsWidth) / (j - tabIndexValue + 1)
+                          const a = this.scrolling.children[k].children[0].children[1] as HTMLDivElement
+                          a.style.paddingLeft = parseInt(a.style.paddingLeft) + (extraWidth / 2) - 0.5 + 'px'
+                          a.style.paddingRight = parseInt(a.style.paddingRight) + (extraWidth / 2) - 0.5 + 'px'
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            if (this.scrolling) {
+              this.scrolling.scrollLeft = 0
+            }
+          } else {
+            if (this.scrolling && this.scrolling.children && this.scrolling.children[0] && this.scrolling.children[0].children[0] && this.scrolling.children[0].children[0].children[1] && this.scrolling.children[0].children[0].children[1].children[0]) {
+              const move = this.scrolling as HTMLDivElement
+              const moveChild = this.scrolling.children[0] as HTMLDivElement
+              for (let index = 0; index < move.children.length; index++) {
+                const a = move.children[index].children[0].children[1] as HTMLDivElement
+                a.style.paddingLeft = '5px'
+                a.style.paddingRight = '5px'
+              }
+            }
+          }
+        } else if (this.properties.Style === 1) {
+          if (this.scrolling && this.scrolling.children && this.scrolling.children[0] && this.scrolling.children[0].children[0] && this.scrolling.children[0].children[0].children[1] && this.scrolling.children[0].children[0].children[1].children[0]) {
+            const move = this.scrolling as HTMLDivElement
+            const moveChild = this.scrolling.children[0] as HTMLDivElement
+            for (let index = 0; index < move.children.length; index++) {
+              const a = move.children[index].children[0].children[1] as HTMLDivElement
+              a.style.paddingLeft = '5px'
+              a.style.paddingRight = '5px'
+            }
+            debugger
+            if (move.offsetHeight > (moveChild.offsetHeight + 5)) {
+              console.log('move.offseHeight', move.offsetHeight)
+              console.log('moveChild.offsetHeight', moveChild.offsetHeight)
+              let numberOfRows = this.properties.Value !== 0 ? Math.ceil(move.offsetHeight / (moveChild.offsetHeight + 5)) : Math.ceil(move.offsetHeight / moveChild.offsetHeight)
+              console.log('nOfRows', numberOfRows)
+              let tabIndexValue = 0
+              let currentTabsWidth = 0
+              let rowWidth = 0
+              for (let i = 0; i < numberOfRows; i++) {
+                currentTabsWidth = 0
+                for (let j = tabIndexValue; j < move.children.length; j++) {
+                  const a = move.children[j].children[0].children[1] as HTMLDivElement
+                  const childElement = move.children[j].children[0].children[1].children[0] as HTMLSpanElement
+                  if (i !== numberOfRows - 1) {
+                    currentTabsWidth += (childElement.clientWidth + parseInt(a.style.paddingLeft) + parseInt(a.style.paddingRight) + 10)
+                  }
+                  if (currentTabsWidth > this.properties.Width!) {
+                    rowWidth = currentTabsWidth - (childElement.clientWidth + parseInt(a.style.paddingLeft) + parseInt(a.style.paddingRight) + 10)
+                    console.log('currentTabsWidth', currentTabsWidth)
+                    if (rowWidth !== 0) {
+                      for (let k = tabIndexValue; k < j; k++) {
+                        if (k === (j - 1)) {
+                          const extraWidth = (this.properties.Width! - rowWidth) / (j - tabIndexValue)
+                          for (let l = tabIndexValue; l <= k; l++) {
+                            const a = this.scrolling.children[l].children[0].children[1] as HTMLDivElement
+                            a.style.paddingLeft = parseInt(a.style.paddingLeft) + (extraWidth / 2) - 0.5 + 'px'
+                            a.style.paddingRight = parseInt(a.style.paddingRight) + (extraWidth / 2) - 0.5 + 'px'
+                          }
+                        }
+                      }
+                      tabIndexValue = j
+                      currentTabsWidth = 0
+                    } else {
+                      tabIndexValue = j + 1
+                      currentTabsWidth = 0
+                    }
+                    break
+                  } else if (i === numberOfRows - 1) {
+                    const a = move.children[j].children[0].children[1] as HTMLDivElement
+                    const childElement = move.children[j].children[0].children[1].children[0] as HTMLSpanElement
+                    currentTabsWidth += (childElement.clientWidth + parseInt(a.style.paddingLeft) + parseInt(a.style.paddingRight) + 10)
+                    if (j === move.children.length - 1) {
+                      for (let k = tabIndexValue; k <= j; k++) {
+                        const extraWidth = (this.properties.Width! - currentTabsWidth) / (j - tabIndexValue + 1)
+                        const a = this.scrolling.children[k].children[0].children[1] as HTMLDivElement
+                        a.style.paddingLeft = parseInt(a.style.paddingLeft) + (extraWidth / 2) - 0.5 + 'px'
+                        a.style.paddingRight = parseInt(a.style.paddingRight) + (extraWidth / 2) - 0.5 + 'px'
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
   @Watch('properties.TabOrientation')
   orientValidate () {
     this.scrollButtonVerify()
@@ -829,6 +997,7 @@ export default class FDTabStrip extends FdControlVue {
     this.widthValue = this.scrolling.clientWidth
     if (this.scrolling) {
       Vue.nextTick(() => {
+        this.updateTabsWidth()
         this.topValue = this.scrolling.offsetHeight!
         this.widthValue = this.scrolling.clientWidth
       })
@@ -847,10 +1016,12 @@ export default class FDTabStrip extends FdControlVue {
       Vue.nextTick(() => {
         this.topValue = this.scrolling.offsetHeight!
         this.widthValue = this.scrolling.clientWidth
+        this.updateTabsWidth()
       })
     }
   }
   mounted () {
+    this.updateTabsWidth()
     this.$el.focus()
     this.scrollButtonVerify()
     this.tempScrollWidth = this.scrolling.offsetWidth!
@@ -874,6 +1045,7 @@ export default class FDTabStrip extends FdControlVue {
         this.updateDataModel({ propertyName: 'Height', value: this.properties.Height! - 1 })
         this.topValue = this.scrolling.offsetHeight!
         this.widthValue = this.scrolling.clientWidth
+        this.updateTabsWidth()
       })
     }
   }
@@ -898,6 +1070,7 @@ export default class FDTabStrip extends FdControlVue {
         this.updateDataModel({ propertyName: 'Height', value: this.properties.Height! - 1 })
         this.topValue = this.scrolling.offsetHeight!
         this.widthValue = this.scrolling.clientWidth
+        this.updateTabsWidth()
       })
     }
   }
@@ -1031,6 +1204,7 @@ export default class FDTabStrip extends FdControlVue {
       Vue.nextTick(() => {
         this.topValue = this.scrolling.offsetHeight!
         this.widthValue = this.scrolling.clientWidth
+        this.updateTabsWidth()
       })
     }
     Vue.nextTick(() => {
