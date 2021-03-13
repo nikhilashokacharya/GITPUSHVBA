@@ -28,6 +28,7 @@
             @mouseover="updateMouseCursor"
           >
             <FDControlTabs
+              @isMouseDown="isMouseDownPageTab"
               @setValue="setValue"
               @isChecked="isChecked"
               :setFontStyle="setFontStyle"
@@ -74,6 +75,7 @@
             "
           >
             <Container
+              v-if="properties.Value !== -1"
               :userFormId="userFormId"
               :controlId="selectedPageID"
               :containerId="selectedPageID"
@@ -98,8 +100,8 @@
         </div>
         <div></div>
         <div :style="getScrollButtonStyleObj" ref="buttonStyleRef">
-          <button class="left-button" :style="scrollButtonStyle" @click="leftmove" @mouseover="updateMouseCursor"></button>
-          <button class="right-button" :style="scrollButtonStyle" @click="rightmove" @mouseover="updateMouseCursor"></button>
+          <button class="left-button" :style="scrollButtonStyle" @mousedown.stop @click="leftmove" @mouseover="updateMouseCursor"></button>
+          <button class="right-button" :style="scrollButtonStyle" @mousedown.stop @click="rightmove" @mouseover="updateMouseCursor"></button>
         </div>
       </div>
     </div>
@@ -154,6 +156,7 @@ export default class FDMultiPage extends Mixins(FdContainerVue) {
   rowsCount: string = '';
   scrollButtonHeight: number = 0;
   scrollButtonWidth: number = 0;
+  pageValueIndex: selectedTab
 
   updateTabsWidth () {
     if (this.properties.MultiRow) {
@@ -241,12 +244,8 @@ export default class FDMultiPage extends Mixins(FdContainerVue) {
               a.style.paddingLeft = '5px'
               a.style.paddingRight = '5px'
             }
-            debugger
             if (move.offsetHeight > (moveChild.offsetHeight + 5)) {
-              console.log('move.offseHeight', move.offsetHeight)
-              console.log('moveChild.offsetHeight', moveChild.offsetHeight)
               let numberOfRows = this.properties.Value !== 0 ? Math.ceil(move.offsetHeight / (moveChild.offsetHeight + 5)) : Math.ceil(move.offsetHeight / moveChild.offsetHeight)
-              console.log('nOfRows', numberOfRows)
               let tabIndexValue = 0
               let currentTabsWidth = 0
               let rowWidth = 0
@@ -260,7 +259,6 @@ export default class FDMultiPage extends Mixins(FdContainerVue) {
                   }
                   if (currentTabsWidth > this.properties.Width!) {
                     rowWidth = currentTabsWidth - (childElement.clientWidth + parseInt(a.style.paddingLeft) + parseInt(a.style.paddingRight) + 10)
-                    console.log('currentTabsWidth', currentTabsWidth)
                     if (rowWidth !== 0) {
                       for (let k = tabIndexValue; k < j; k++) {
                         if (k === (j - 1)) {
@@ -295,6 +293,16 @@ export default class FDMultiPage extends Mixins(FdContainerVue) {
                 }
               }
             }
+          }
+        }
+      } else {
+        if (this.scrolling && this.scrolling.children && this.scrolling.children[0] && this.scrolling.children[0].children[0] && this.scrolling.children[0].children[0].children[1] && this.scrolling.children[0].children[0].children[1].children[0]) {
+          const move = this.scrolling as HTMLDivElement
+          const moveChild = this.scrolling.children[0] as HTMLDivElement
+          for (let index = 0; index < move.children.length; index++) {
+            const a = move.children[index].children[0].children[1] as HTMLDivElement
+            a.style.paddingLeft = '5px'
+            a.style.paddingRight = '5px'
           }
         }
       }
@@ -405,11 +413,13 @@ export default class FDMultiPage extends Mixins(FdContainerVue) {
   }
   focusPage () {
     Vue.nextTick(() => {
-      if (typeof this.properties.Value === 'number' && this.controls.length > 0) {
-        const value: number = this.properties.Value as number
-        (this.controlTab[value].$el.children[1] as HTMLSpanElement).focus()
-      } else {
-        (this.$el.children[0] as HTMLDivElement).focus()
+      if (this.properties.Value! > 0) {
+        if (typeof this.properties.Value === 'number' && this.controls.length > 0) {
+          const value: number = this.properties.Value as number
+          (this.controlTab[value].$el.children[1] as HTMLSpanElement).focus()
+        } else {
+          (this.$el.children[0] as HTMLDivElement).focus()
+        }
       }
     })
   }
@@ -668,18 +678,20 @@ export default class FDMultiPage extends Mixins(FdContainerVue) {
    *
    */
   isChecked (value: selectedTab) {
-    if (this.isEditMode) {
-      this.updatedValue = value.indexValue
-      this.selectedPageID = value.pageValue
-      this.updateDataModel({ propertyName: 'Value', value: value.indexValue })
-      this.selectControl({
-        userFormId: this.userFormId,
-        select: {
-          container: this.getContainerList(this.selectedPageID),
-          selected: [this.selectedPageID]
-        }
-      })
-      this.focusPage()
+    if (this.containerRef.isPropChanged !== true) {
+      if (this.isEditMode) {
+        this.updatedValue = value.indexValue
+        this.selectedPageID = value.pageValue
+        this.updateDataModel({ propertyName: 'Value', value: value.indexValue })
+        this.selectControl({
+          userFormId: this.userFormId,
+          select: {
+            container: this.getContainerList(this.selectedPageID),
+            selected: [this.selectedPageID]
+          }
+        })
+        this.focusPage()
+      }
     }
   }
 
@@ -1156,6 +1168,8 @@ export default class FDMultiPage extends Mixins(FdContainerVue) {
   }
 
   updateMultiRowforLeftAndRight () {
+    let pagecount = this.scrolling.children.length
+    const controlProp = this.properties
     if (this.properties.MultiRow) {
       this.rowsCount = ''
       if (this.properties.TabOrientation === 2 || this.properties.TabOrientation === 3) {
@@ -1165,42 +1179,137 @@ export default class FDMultiPage extends Mixins(FdContainerVue) {
         let sum = 0
         let count = this.scrolling.children.length
         const a = this.properties.Value === 0 ? this.scrolling.children[1].children[0].clientHeight + 'px' : this.scrolling.children[0].children[0].clientHeight + 'px'
+        if (controlProp.TabFixedHeight === 0) {
+          for (let index = 0; index < pagecount; index++) {
+            const myref = this.scrolling.children[index].children[0].children[1] as HTMLDivElement
+            const mydivref = this.scrolling.children[index] as HTMLDivElement
+            myref.style.height = ''
+            mydivref.style.height = ''
+            mydivref.style.marginTop = ''
+          }
+        }
         for (let i = 0; i < this.scrolling.children.length; i++) {
-          sum += (this.scrolling.children[i].children[0].clientHeight)
+          if (this.properties.Style === 1) {
+            sum += (this.scrolling.children[i].children[0].clientHeight + 3)
+          } else if (this.properties.Style === 0) {
+            sum += (this.scrolling.children[i].children[0].clientHeight)
+          }
         }
         if (totalHeight < sum) {
-          count = totalHeight / (this.scrolling.children[0].children[0].clientHeight)
+          if (this.properties.Style === 1) {
+            count = totalHeight / ((this.properties.Value === 0 ? this.scrolling.children[1].children[0].clientHeight : this.scrolling.children[0].children[0].clientHeight) + 3)
+          } else if (this.properties.Style === 0) {
+            count = totalHeight / (this.properties.Value === 0 ? this.scrolling.children[1].children[0].clientHeight : this.scrolling.children[0].children[0].clientHeight)
+          }
         }
         if (count < this.scrolling.children.length) {
           for (let j = 0; j < Math.trunc(count); j++) {
-            if (this.properties.Value! >= Math.trunc(count)) {
-              const columnsCount = Math.ceil(this.scrolling.children.length / (Math.trunc(count)))
-              let previousColumnsCount = Math.ceil((this.properties.Value! as number) / (Math.trunc(count))) - 1
-              for (let index = 1; index <= columnsCount; index++) {
-                if ((this.properties.Value as number + 1) === ((Math.trunc(count) * index) + 1)) {
-                  previousColumnsCount = previousColumnsCount + 1
-                }
-              }
-              if (j === (this.properties.Value! as number - (Math.trunc(count) * previousColumnsCount))) {
+            if (j === this.properties.Value) {
+              if (this.properties.Style as number === 1) {
                 this.rowsCount = this.rowsCount + (parseInt(a) + 5 + 'px') + ' '
-              } else {
+              } else if (this.properties.Style as number === 0) {
+                this.rowsCount = this.rowsCount + (parseInt(a) + 4 + 'px') + ' '
+              }
+            } else {
+              if (this.properties.Style as number === 1) {
+                this.rowsCount = this.rowsCount + (parseInt(a) + 3 + 'px') + ' '
+              } else if (this.properties.Style as number === 0) {
                 this.rowsCount = this.rowsCount + (parseInt(a) + 'px') + ' '
               }
-            } else if (j === this.properties.Value) {
-              this.rowsCount = this.rowsCount + (parseInt(a) + 5 + 'px') + ' '
-            } else {
-              this.rowsCount = this.rowsCount + (parseInt(a) + 'px') + ' '
             }
           }
         } else {
           for (let j = 0; j < Math.trunc(count); j++) {
             if (j === k) {
-              this.rowsCount = this.rowsCount + (parseInt(a) + 5 + 'px') + ' '
+              if (this.properties.Style as number === 1) {
+                this.rowsCount = this.rowsCount + (parseInt(a) + 7 + 'px') + ' '
+              } else if (this.properties.Style as number === 0) {
+                this.rowsCount = this.rowsCount + (parseInt(a) + 4 + 'px') + ' '
+              }
             } else {
-              this.rowsCount = this.rowsCount + a + ' '
+              if (this.properties.Style as number === 1) {
+                this.rowsCount = this.rowsCount + (parseInt(a) + 3 + 'px') + ' '
+              } else if (this.properties.Style as number === 0) {
+                this.rowsCount = this.rowsCount + (parseInt(a) + 'px') + ' '
+              }
             }
           }
         }
+        const moveHeight = controlProp.Height
+        if (controlProp.TabFixedHeight === 0) {
+          if (((pagecount) % Math.trunc(count)) !== 0) {
+            const labelHeight = (Math.ceil(moveHeight! / ((pagecount) % Math.trunc(count))) - 16) - 0.5
+            let marginHeight = labelHeight + 15 - parseInt(controlProp.Value !== 0 ? this.rowsCount.substring(0, 2) : this.rowsCount.substring(5, 7))
+            let a = this.rowsCount.split('px ').map((ele) => {
+              if (!isNaN(parseInt(ele))) {
+                return parseInt(ele)
+              }
+            })
+            for (let index = pagecount - ((pagecount) % Math.trunc(count)), j = 0; index < pagecount; index++, j++) {
+              const myref = this.scrolling.children[index].children[0].children[1] as HTMLDivElement
+              const mydivref = this.scrolling.children[index] as HTMLDivElement
+              mydivref.style.marginTop = `${marginHeight * j}px`
+              mydivref.style.height = `${labelHeight + 14}px`
+              myref.style.height = `${labelHeight}px`
+            }
+            for (let index = 0; index < Math.trunc(count); index++) {
+              const myref = this.scrolling.children[index].children[0].children[1] as HTMLDivElement
+              const mydivref = this.scrolling.children[index] as HTMLDivElement
+              myref.style.height = ''
+              mydivref.style.height = ''
+              mydivref.style.marginTop = ''
+            }
+            const columnsCount = Math.ceil(this.scrolling.children.length / (Math.trunc(count)))
+            for (let j = 1; j <= columnsCount; j++) {
+              if ((j * Math.trunc(count)) - 1 < pagecount) {
+                const myref = this.scrolling.children[(j * Math.trunc(count) - 1)].children[0].children[1] as HTMLDivElement
+                if (Object.values(myref.style).includes('height')) {
+                  myref.style.height = ''
+                }
+              }
+            }
+          } else {
+            for (let index = 0; index < pagecount; index++) {
+              const myref = this.scrolling.children[index].children[0].children[1] as HTMLDivElement
+              const mydivref = this.scrolling.children[index] as HTMLDivElement
+              myref.style.height = ''
+              mydivref.style.height = ''
+              mydivref.style.marginTop = ''
+            }
+          }
+          let gridSum = this.rowsCount.split('px ').map(ele => { return isNaN(parseInt(ele)) ? 0 : parseInt(ele) })
+          let totalgridHeight = gridSum.reduce(function (a, b) {
+            return a + b
+          }, 0)
+          if (totalHeight > totalgridHeight && pagecount > count) {
+            const diff = totalHeight - totalgridHeight
+            const columnsCount = Math.ceil(this.scrolling.children.length / (Math.trunc(count)))
+            for (let j = 1; j <= columnsCount; j++) {
+              if ((j * Math.trunc(count)) - 1 < pagecount) {
+                const myref = this.scrolling.children[(j * Math.trunc(count)) - 1].children[0].children[1] as HTMLDivElement
+                const myDivref = this.scrolling.children[(j * Math.trunc(count)) - 1] as HTMLDivElement
+                myDivref.style.height = `${myref.clientHeight + diff}px`
+                myref.style.height = `${myref.clientHeight + diff - 14}px`
+              }
+            }
+          }
+        }
+      } else {
+        for (let index = 0; index < pagecount; index++) {
+          const myref = this.scrolling.children[index].children[0].children[1] as HTMLDivElement
+          const mydivref = this.scrolling.children[index] as HTMLDivElement
+          myref.style.height = ''
+          mydivref.style.height = ''
+          mydivref.style.marginTop = ''
+        }
+      }
+    } else if (controlProp.TabFixedHeight === 0) {
+      for (let index = 0; index < pagecount; index++) {
+        const myref = this.scrolling.children[index].children[0].children[1] as HTMLDivElement
+        const mydivref = this.scrolling.children[index] as HTMLDivElement
+        myref.style.height = ''
+        mydivref.style.height = ''
+        mydivref.style.marginTop = ''
       }
     }
   }
@@ -1294,8 +1403,10 @@ export default class FDMultiPage extends Mixins(FdContainerVue) {
       Vue.nextTick(() => {
         this.topValue = this.scrolling.offsetHeight!
         this.widthValue = this.scrolling.clientWidth
-        this.scrolling.scrollLeft = 0
-        this.updateTabsWidth()
+        if (this.properties.MultiRow) {
+          this.scrolling.scrollLeft = 0
+          this.updateTabsWidth()
+        }
       })
     }
   }
@@ -1446,7 +1557,7 @@ export default class FDMultiPage extends Mixins(FdContainerVue) {
     this.updateTabsWidth()
     this.scrollButtonVerify()
     this.scrollLeftTop(this.data)
-    this.selectedPageID = this.controls[0]
+    this.selectedPageID = typeof (this.properties.Value!) === 'number' ? this.controls[this.properties.Value!] : this.controls[0]
     this.calculateWidthHeight()
   }
   dragSelectorControl (event: MouseEvent) {
@@ -1552,6 +1663,18 @@ export default class FDMultiPage extends Mixins(FdContainerVue) {
       this.focusPage()
     })
     EventBus.$on('setPage', this.setPageId)
+    EventBus.$on('conSelMouseDown', this.selPageDown)
+    EventBus.$on('getPageHeightWidth', this.getPageHeightWidth)
+  }
+  getPageHeightWidth (callback: Function) {
+    callback(parseInt(this.styleContentObj.height!), parseInt(this.styleContentObj.width!))
+  }
+  selPageDown (event: MouseEvent, control: string) {
+    if (control === this.controlId) {
+      Vue.nextTick(() => {
+        this.pageMouseDown(event)
+      })
+    }
   }
   setPageId (controlId: string) {
     if (controlId === this.controlId) {
@@ -1683,14 +1806,33 @@ export default class FDMultiPage extends Mixins(FdContainerVue) {
     }
   }
   pageMouseDown (event: MouseEvent) {
-    let editMode: boolean = this.isEditMode
-    if (this.selectedPageID) {
-      EventBus.$emit('getDragSelectorEdit', event, this.selectedPageID, (editmode: boolean) => {
-        editMode = editmode
-      })
+    if (this.containerRef.isPropChanged) {
+      this.containerRef.mouseDownEvent = event
+      this.containerRef.isControlMouseDown = true
+      this.containerRef.mouseDownContainer = this.controlId
     }
-    if (editMode) {
-      event.stopPropagation()
+    if (this.containerRef.isPropChanged !== true) {
+      let editMode: boolean = this.isEditMode
+      if (this.selectedPageID) {
+        EventBus.$emit('getDragSelectorEdit', event, this.selectedPageID, (editmode: boolean) => {
+          editMode = editmode
+        })
+      }
+      if (editMode) {
+        event.stopPropagation()
+        this.setEditMode(editMode)
+        this.updatedValue = this.pageValueIndex.indexValue
+        this.selectedPageID = this.pageValueIndex.pageValue
+        this.updateDataModel({ propertyName: 'Value', value: this.pageValueIndex.indexValue })
+        this.selectControl({
+          userFormId: this.userFormId,
+          select: {
+            container: this.getContainerList(this.selectedPageID),
+            selected: [this.selectedPageID]
+          }
+        })
+        this.focusPage()
+      }
     }
   }
   get getPicture () {
@@ -1700,6 +1842,9 @@ export default class FDMultiPage extends Mixins(FdContainerVue) {
   }
   mouseUpOnPage () {
     EventBus.$emit('mouseUpOnPageTab', true)
+  }
+  isMouseDownPageTab (value: selectedTab) {
+    this.pageValueIndex = value
   }
 }
 </script>
@@ -1860,7 +2005,7 @@ export default class FDMultiPage extends Mixins(FdContainerVue) {
   z-index: 1;
 }
 .content {
-  overflow: auto;
+  overflow: hidden;
 }
 .spanClass {
   text-decoration: underline;
