@@ -742,10 +742,14 @@ export default class FDTextBox extends Mixins(FdControlVue) {
   }
 
   mounted () {
-    this.$el.focus()
+    this.$el.focus({
+      preventScroll: true
+    })
   }
   releaseEditMode (event: KeyboardEvent) {
-    this.$el.focus()
+    this.$el.focus({
+      preventScroll: true
+    })
     this.setContentEditable(event, false)
   }
   eventStoppers () {

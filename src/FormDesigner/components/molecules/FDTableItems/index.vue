@@ -9,6 +9,7 @@
         "
         :propertyData="controlPropertyData"
         :propertyName="propertyName"
+        :isPropChanged="isPropChanged"
       />
       <CustomDropDown
         @updateAppearance="updateAppearance"
@@ -55,6 +56,7 @@ export default class FDTableItems extends Vue {
   @Prop({ default: 'default' }) propertyName!: string
   @Prop({ required: true, type: String }) public readonly userFormId! : string
   @Prop({ required: true }) public readonly getSelectedControlsDatas: any
+  @Prop({ required: false }) public readonly isPropChanged: boolean
 
   get propertyType () {
     return this.controlPropertyData.type

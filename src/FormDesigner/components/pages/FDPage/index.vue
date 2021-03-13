@@ -234,6 +234,12 @@ export default class FDPage extends Vue {
       this.containerId = containerId
       this.handleKeyDown(event)
     })
+    EventBus.$on('closeMenu', () => {
+      if (this.viewMenu) {
+        this.viewMenu = false
+        this.textMenu = false
+      }
+    })
   }
   destroyed () {
     EventBus.$off('contextMenuDisplay')
@@ -241,6 +247,7 @@ export default class FDPage extends Vue {
     EventBus.$off('editModeContextMenu')
     EventBus.$off('openTextContextMenu')
     EventBus.$off('handleKeyDown')
+    EventBus.$off('closeMenu')
   }
 
   editModeContextMenu (e: MouseEvent, mode: boolean, data: controlData) {
@@ -384,6 +391,7 @@ export default class FDPage extends Vue {
           if (!groupId && selectedGroupArray.length <= 1) {
             val.text = '<u>U</u>ngroup'
             val.id = 'ID_UNGROUP'
+            val.disabled = selected.length > 1
           } else {
             val.text = '<u>G</u>roup'
             val.id = 'ID_GROUP'
@@ -483,26 +491,16 @@ export default class FDPage extends Vue {
   }
   getCursorPos (event: MouseEvent) {
     const controlType = this.userformData[this.userFormId][this.controlId].type
-    if (controlType === 'ComboBox' || controlType === 'TextBox') {
-      const eventTarget = event.target as HTMLTextAreaElement
-      const difference = eventTarget.selectionEnd - eventTarget.selectionStart
-      if (difference > 0) {
-        return false
-      } else {
+    const isSupported = typeof window.getSelection !== 'undefined'
+    if (isSupported) {
+      const selection = window.getSelection()!
+      if (selection.anchorOffset === selection.focusOffset) {
         return true
+      } else {
+        return false
       }
-    } else {
-      const isSupported = typeof window.getSelection !== 'undefined'
-      if (isSupported) {
-        const selection = window.getSelection()!
-        if (selection.anchorOffset === selection.focusOffset) {
-          return true
-        } else {
-          return false
-        }
-      }
-      return true
     }
+    return true
   }
   handleKeyDown (event: KeyboardEvent) {
     this.mainConextMenu.updateAction(event)

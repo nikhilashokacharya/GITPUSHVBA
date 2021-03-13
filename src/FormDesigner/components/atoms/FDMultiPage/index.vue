@@ -244,8 +244,12 @@ export default class FDMultiPage extends Mixins(FdContainerVue) {
               a.style.paddingLeft = '5px'
               a.style.paddingRight = '5px'
             }
+            debugger
             if (move.offsetHeight > (moveChild.offsetHeight + 5)) {
+              console.log('move.offseHeight', move.offsetHeight)
+              console.log('moveChild.offsetHeight', moveChild.offsetHeight)
               let numberOfRows = this.properties.Value !== 0 ? Math.ceil(move.offsetHeight / (moveChild.offsetHeight + 5)) : Math.ceil(move.offsetHeight / moveChild.offsetHeight)
+              console.log('nOfRows', numberOfRows)
               let tabIndexValue = 0
               let currentTabsWidth = 0
               let rowWidth = 0
@@ -259,6 +263,7 @@ export default class FDMultiPage extends Mixins(FdContainerVue) {
                   }
                   if (currentTabsWidth > this.properties.Width!) {
                     rowWidth = currentTabsWidth - (childElement.clientWidth + parseInt(a.style.paddingLeft) + parseInt(a.style.paddingRight) + 10)
+                    console.log('currentTabsWidth', currentTabsWidth)
                     if (rowWidth !== 0) {
                       for (let k = tabIndexValue; k < j; k++) {
                         if (k === (j - 1)) {
@@ -304,6 +309,16 @@ export default class FDMultiPage extends Mixins(FdContainerVue) {
             a.style.paddingLeft = '5px'
             a.style.paddingRight = '5px'
           }
+        }
+      }
+    } else {
+      if (this.scrolling && this.scrolling.children && this.scrolling.children[0] && this.scrolling.children[0].children[0] && this.scrolling.children[0].children[0].children[1] && this.scrolling.children[0].children[0].children[1].children[0]) {
+        const move = this.scrolling as HTMLDivElement
+        const moveChild = this.scrolling.children[0] as HTMLDivElement
+        for (let index = 0; index < move.children.length; index++) {
+          const a = move.children[index].children[0].children[1] as HTMLDivElement
+          a.style.paddingLeft = '5px'
+          a.style.paddingRight = '5px'
         }
       }
     }
@@ -1058,6 +1073,7 @@ export default class FDMultiPage extends Mixins(FdContainerVue) {
               : '0px'
           : '0px',
       height: controlProp.TabOrientation === 1 ? (parseInt(height) + 5) + 'px' : (parseInt(height) - 3) + 'px',
+      // width: controlProp.TabOrientation === 3 ? controlProp.Style === 0 ? (parseInt(width) + 4) + 'px' : parseInt(width) + 'px' : width,
       width: controlProp.TabOrientation === 3 ? (parseInt(width) + 4) + 'px' : width,
       left:
         controlProp.Style !== 2

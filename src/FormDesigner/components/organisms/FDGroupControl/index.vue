@@ -6,7 +6,7 @@
       :key="groupName.concat(index)"
       :style="getGroupStyle(groupName)"
       :id="groupName"
-      @mousedown="handleMouseDown($event,'drag')"
+      @mousedown="handleMouseDown($event,'drag', groupName)"
       @contextmenu.self.stop="openMenu($event,'control')"
     >
     <div
@@ -93,6 +93,7 @@ export default class GroupControl extends FDCommonMethod {
     EventBus.$on('getGroupSize', this.getGroupSize)
     EventBus.$on('groupElementDrag', this.elementDrag)
     EventBus.$on('getGroupDisplay', this.getGroupDisplay)
+    EventBus.$on('setGroupSize', this.setGroupSize)
     EventBus.$on('updateGroupStyle', (groupName: string) => {
       this.groupStyle(groupName)
     })
@@ -113,6 +114,7 @@ export default class GroupControl extends FDCommonMethod {
     EventBus.$off('getGroupSize', this.getGroupSize)
     EventBus.$off('groupElementDrag', this.elementDrag)
     EventBus.$off('updateGroupStyle')
+    EventBus.$off('setGroupSize', this.setGroupSize)
   }
   convertToGridSize (val: number) {
     const gridSize = 9
@@ -180,6 +182,16 @@ export default class GroupControl extends FDCommonMethod {
   getGroupSize (callBack: Function) {
     if (this.containerId === this.selectedControls[this.userFormId].container[0]) {
       callBack(this.divStyleArray)
+    }
+  }
+  setGroupSize (callBack: Function) {
+    if (this.divStyleArray.length > 0) {
+      for (const group of this.divStyleArray) {
+        if (group.display === 'block') {
+          this.groupStyle(group.groupName!)
+        }
+      }
+      callBack()
     }
   }
   endGroupMoveControl () {
@@ -355,8 +367,35 @@ export default class GroupControl extends FDCommonMethod {
     }
   }
 
-  handleMouseDown (event: CustomMouseEvent, handler: string) {
+  get isGroupControlelected () {
+    const userData = this.userformData[this.userFormId]
+    let groupId = userData[this.getSelectedControlsDatas![0]].properties.GroupID
+    if (groupId === '') {
+      const containerList = [...this.getContainerList(this.getSelectedControlsDatas![0])]
+      containerList.reverse()
+      for (let i = 1; i < containerList.length; i++) {
+        const type = userData[containerList[i]].type
+        if (type === 'Page') {
+          groupId = userData[this.getContainerList(containerList[i])[0]].properties.GroupID!
+        } else {
+          groupId = userData[containerList[i]].properties.GroupID!
+        }
+        if (groupId !== '') {
+          break
+        }
+      }
+    }
+    return groupId
+  }
+
+  handleMouseDown (event: CustomMouseEvent, handler: string, groupName: string | undefined) {
     if (this.toolBoxSelect === 'Select' && !this.isMouseDownProp) {
+      if (groupName && this.isGroupControlelected === groupName) {
+        this.selectControl({
+          userFormId: this.userFormId,
+          select: { container: this.getContainerList(groupName!), selected: [groupName!] }
+        })
+      }
       event.stopPropagation()
       this.tempEvent = event
       EventBus.$emit('groupDrag', 'NotDrag')
@@ -704,6 +743,14 @@ export default class GroupControl extends FDCommonMethod {
     EventBus.$emit('groupDrag', 'NotDrag')
     EventBus.$emit('endMoveControl', 'groupEndMove')
     EventBus.$emit('endGroupMoveControl')
+    if (handler === 'drag' && event.which !== 3) {
+      const selected = this.selectedControls[this.userFormId].selected
+      for (const grpname in selected) {
+        if (selected[grpname].startsWith('group')) {
+          this.groupStyle(selected[grpname])
+        }
+      }
+    }
     for (const controlGroup in this.divStyleArray) {
       const groupName = this.divStyleArray[controlGroup].groupName!
       if (groupName.startsWith('group')) {
@@ -923,8 +970,8 @@ export default class GroupControl extends FDCommonMethod {
     )
     var(--border-width);
   padding: 5px;
-  margin-top: -5px;
-  margin-left: -5px;
+  margin-top: -10px;
+  margin-left: -10px;
   display: none;
 }
 .mainEditDiv {
@@ -942,8 +989,8 @@ export default class GroupControl extends FDCommonMethod {
     )
     var(--border-width);
   padding: 5px;
-  margin-top: -5px;
-  margin-left: -5px;
+  margin-top: -10px;
+  margin-left: -10px;
   display: none;
 }
 .innerGroupStyle {

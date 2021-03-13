@@ -6,7 +6,7 @@ import { IaddControl, IchangeToolBoxSelect, IdeleteControl, IselectControl, Iupd
 
 import { controlContextMenu } from '@/FormDesigner/models/controlContextMenuData'
 import { userformContextMenu } from '@/FormDesigner/models/userformContextMenuData'
-import { ControlPropertyData } from '@/FormDesigner/models/ControlsTableProperties/ControlPropertyData.ts'
+import { ControlPropertyData } from '@/FormDesigner/models/ControlsTableProperties/ControlPropertyData'
 import { EventBus } from '@/FormDesigner/event-bus'
 @Component({
   name: 'FdContainerVue'
