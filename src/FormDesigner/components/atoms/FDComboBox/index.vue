@@ -557,7 +557,8 @@ export default class FDComboBox extends Mixins(FdControlVue) {
     this.selectionData[0] = a.innerText
     for (let i = 0; i < this.extraDatas.RowSourceData!.length; i++) {
       const b = this.trRef[i].children[0] as HTMLDivElement
-      if (a.innerText === b.innerText) {
+      const aInnerText = a.innerText.split('\n')
+      if (aInnerText[0] === b.innerText) {
         if (this.properties.TextColumn === -1) {
           const text = this.extraDatas.RowSourceData![i][0]
           this.updateDataModel({ propertyName: 'Text', value: text })
