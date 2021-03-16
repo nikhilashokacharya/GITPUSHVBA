@@ -268,9 +268,18 @@ export default class FDScrollBar extends Mixins(FdControlVue) {
   get inputStyleObj () {
     const controlProp = this.properties
     let a = null
+    let c:Array<number> = []
     let temprgba
-    if (controlProp.BackColor!!.startsWith('rgb')) {
+    if (controlProp.BackColor!.startsWith('rgba')) {
       a = controlProp.BackColor!.split('rgba(')[1].split(',')
+    a!.forEach(element => {
+      c.push(parseInt(element))
+    })
+    } else if (controlProp.BackColor!.startsWith('rgb')) {
+      a = controlProp.BackColor!.split('rgb(')[1].split(',')
+    a!.forEach(element => {
+      c.push(parseInt(element))
+    })
     } else {
       temprgba = this.hexToRgbA(controlProp.BackColor!)
     }
@@ -279,7 +288,7 @@ export default class FDScrollBar extends Mixins(FdControlVue) {
       width: this.checkOtherOrientations() ? `${controlProp.Height! - 40}px` : `${controlProp.Width! - 40}px`,
       height: this.checkOtherOrientations() ? `${controlProp.Width!}px` : `${controlProp.Height!}px`,
       cursor: this.controlCursor,
-      backgroundColor: controlProp.BackColor!.startsWith('rgb') ? `rgba(${a![0]},${a![1]},${a![2]},0.5)` : temprgba,
+      backgroundColor: controlProp.BackColor!.startsWith('rgb') ? `rgba(${c![0]},${c![1]},${c![2]},0.5)` : temprgba,
       margin: '0px'
     }
   }
