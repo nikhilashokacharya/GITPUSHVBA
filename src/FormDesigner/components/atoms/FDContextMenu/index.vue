@@ -78,7 +78,7 @@
 <script lang="ts">
 import { Component, Vue, Prop, Emit } from 'vue-property-decorator'
 import FDSVGImage from '@/FormDesigner/components/atoms/FDSVGImage/index.vue'
-import { ControlPropertyData } from '@/FormDesigner/models/ControlsTableProperties/ControlPropertyData.ts'
+import { ControlPropertyData } from '@/FormDesigner/models/ControlsTableProperties/ControlPropertyData'
 
 import { Action, State } from 'vuex-class'
 import {
@@ -102,18 +102,18 @@ import FDCommonMethod from '@/api/abstract/FormDesigner/FDCommonMethod'
   }
 })
 export default class ContextMenu extends FDCommonMethod {
-  @Prop() values: Array<IControlContextMenu>;
-  @Prop() userFormId: string;
-  @Prop() containerId: string;
-  @Prop() keyEventName: string;
-  @Prop() controlId: string;
-  @Prop() selectedTab: number;
-  @Prop() data: controlData;
-  @Prop() groupStyleArray: Array<IGroupStyle>
-  @Prop() contextMenutype: string
-  @Prop() editTextRef: HTMLSpanElement | HTMLTextAreaElement
-  @Prop() copiedText: string
-  @Prop() textMenu: boolean
+  @Prop() values!: Array<IControlContextMenu>;
+  @Prop() userFormId!: string;
+  @Prop() containerId!: string;
+  @Prop() keyEventName!: string;
+  @Prop() controlId!: string;
+  @Prop() selectedTab!: number;
+  @Prop() data: controlData | undefined;
+  @Prop() groupStyleArray!: Array<IGroupStyle>
+  @Prop() contextMenutype!: string
+  @Prop() editTextRef!: HTMLSpanElement | HTMLTextAreaElement
+  @Prop() copiedText!: string
+  @Prop() textMenu!: boolean
 
   @State((state) => state.fd.selectedControls)
   selectedControls!: fdState['selectedControls'];
@@ -227,11 +227,22 @@ export default class ContextMenu extends FDCommonMethod {
   pasteText (event: MouseEvent) {
     const controlType = this.userformData[this.userFormId][this.controlId].type
     const position = this.getCursorPos(event)
-    const length = position.endPosition - position.startPosition
-    let baseValue = this.editTextRef.innerText.split('')
-    baseValue.splice(position.startPosition, length)
-    const updateValue = baseValue.slice(0, position.startPosition).join('') + this.copiedText + baseValue.slice(position.startPosition).join('')
-    EventBus.$emit('updateText', updateValue)
+    if (controlType === 'ComboBox' || controlType === 'TextBox') {
+      if (this.editTextRef instanceof HTMLTextAreaElement) {
+        const length = this.editTextRef.selectionEnd - this.editTextRef.selectionStart
+        let baseValue = this.editTextRef.value.split('')
+        baseValue.splice(this.editTextRef.selectionStart, length)
+        const updateValue = baseValue.slice(0, this.editTextRef.selectionStart).join('') + this.copiedText + baseValue.slice(this.editTextRef.selectionStart).join('')
+        this.editTextRef.value = updateValue
+        this.editTextRef.dispatchEvent(new KeyboardEvent('input'))
+      }
+    } else {
+      const length = position.endPosition - position.startPosition
+      let baseValue = this.editTextRef.innerText.split('')
+      baseValue.splice(position.startPosition, length)
+      const updateValue = baseValue.slice(0, position.startPosition).join('') + this.copiedText + baseValue.slice(position.startPosition).join('')
+      EventBus.$emit('updateText', updateValue)
+    }
   }
   getCursorPos (event: MouseEvent) {
     let startPosition = 0
@@ -379,15 +390,15 @@ export default class ContextMenu extends FDCommonMethod {
   bringForward () {
     const userData = this.userformData[this.userFormId]
     const highProrControl = []
-    const lowProrControl = []
     const container = this.getContainerList(this.getSelectedControlsDatas![0])[0]
-    const containerControls = this.userformData[this.userFormId][container].controls
+    const containerControls = [...this.userformData[this.userFormId][container].controls]
+    containerControls.sort((a, b) => {
+      return userData[b].extraDatas!.zIndex! - userData[a].extraDatas!.zIndex!
+    })
     for (const index in containerControls) {
       const cntrlData = this.userformData[this.userFormId][containerControls[index]]
-      if (cntrlData.type === 'MultiPage' || cntrlData.type === 'Frame' || cntrlData.type === 'ListBox') {
+      if (cntrlData.extraDatas!.zIndex! > userData[containerControls[0]].extraDatas!.zIndex!) {
         highProrControl.push(containerControls[index])
-      } else {
-        lowProrControl.push(containerControls[index])
       }
     }
     let nextSelctedSeries: string[] = []
@@ -439,14 +450,14 @@ export default class ContextMenu extends FDCommonMethod {
           }
         }
       } else {
-        if (getSelControl!.includes(nextSelectedControl) && (type === 'Frame' || type === 'MultiPage' || type === 'ListBox')) {
+        if (getSelControl!.includes(nextSelectedControl) && (type && type !== 'Userform')) {
           if (!nextHighControlSeries.includes(selControl)) {
             nextHighControlSeries.push(selControl)
           }
           if (!nextHighControlSeries.includes(nextSelectedControl)) {
             nextHighControlSeries.push(nextSelectedControl)
           }
-        } else if (type === 'Frame' || type === 'MultiPage' || type === 'ListBox') {
+        } else if (type && type !== 'Userform') {
           if (Object.keys(nextHighControlSeries).length !== 0) {
             const tempExchageIndex = userData[nextHighControlSeries[0]].extraDatas!.zIndex!
             const swapTabIndex = userData[nextSelectedControl].extraDatas!.zIndex!
@@ -481,10 +492,13 @@ export default class ContextMenu extends FDCommonMethod {
     const highProrControl = []
     const lowProrControl = []
     const container = this.getContainerList(this.getSelectedControlsDatas![0])[0]
-    const containerControls = this.userformData[this.userFormId][container].controls
+    const containerControls = [...this.userformData[this.userFormId][container].controls]
+    containerControls.sort((a, b) => {
+      return userData[b].extraDatas!.zIndex! - userData[a].extraDatas!.zIndex!
+    })
     for (const index in containerControls) {
       const cntrlData = this.userformData[this.userFormId][containerControls[index]]
-      if (cntrlData.type === 'MultiPage' || cntrlData.type === 'Frame' || cntrlData.type === 'ListBox') {
+      if (cntrlData.extraDatas!.zIndex! > userData[containerControls[0]].extraDatas!.zIndex!) {
         highProrControl.push(containerControls[index])
       } else {
         lowProrControl.push(containerControls[index])
@@ -538,7 +552,7 @@ export default class ContextMenu extends FDCommonMethod {
             }
           }
         }
-      } else if (!lowProrControl.includes(nextSelectedControl) && (type === 'Frame' || type === 'MultiPage' || type === 'ListBox')) {
+      } else if (!lowProrControl.includes(nextSelectedControl) && (type && type !== 'Userform')) {
         if (getSelControl!.includes(nextSelectedControl)) {
           if (!nextHighControlSeries.includes(selControl)) {
             nextHighControlSeries.push(selControl)
@@ -935,7 +949,6 @@ export default class ContextMenu extends FDCommonMethod {
       item: ctrlObj
     })
     if (isParent && this.copyControlList.type === 'copy') {
-      const newTabIndex = this.userformData[this.userFormId][parentId].controls.length
       this.updateTabIndexValue(ctrlId)
       this.updateZIndexValue(ctrlId)
     }

@@ -4,7 +4,7 @@
       class="resizeMainControlStyle"
       :style="resizeControlStyle"
       :ref="'draRef'.concat(controlId)"
-      @contextmenu.stop="displayContextMenu"
+      @contextmenu.stop="displayContextMenu($event, controlId)"
       @click="containerBorderClick"
       @mouseup="handleMouseUp"
     >
@@ -45,7 +45,7 @@
     </div>
     <div :style="componentStyle"
       @mousedown="controlDragResizeMoueDown"
-      @contextmenu.stop="displayContextMenu"
+      @contextmenu.stop="displayContextMenu($event, '')"
       @mouseup="handleMouseUp"
     >
       <component
@@ -138,6 +138,7 @@ export default class ResizeControl extends FdSelectVue {
 
   controlDragResizeMoueDown (event: MouseEvent) {
     if (this.isPropChanged) {
+      event.stopPropagation()
       this.mouseDownEvent = event
       this.isControlMouseDown = true
       this.mouseDownContainer = this.controlId
@@ -253,6 +254,15 @@ export default class ResizeControl extends FdSelectVue {
   selectMultipleCtrl (val: boolean) {
     this.selMultipleCtrl = val
   }
+  get getControlZIndex () {
+    const selected = this.getSelectedControlsDatas!
+    const getContainerList = this.getContainerList(selected[0])
+    if (selected.includes(this.controlId)) {
+      return this.getHighestZIndex(this.controlId)!
+    } else if (getContainerList.includes(this.controlId)) {
+      return this.getHighestZIndex(this.controlId)!
+    }
+  }
   get componentStyle () {
     const userData = this.userformData[this.userFormId]
     const currentProperties = this.propControlData.properties
@@ -266,19 +276,34 @@ export default class ResizeControl extends FdSelectVue {
     } else if (getContainerList.includes(this.controlId)) {
       highestZIndex = this.getHighestZIndex(this.controlId)!
     }
-    return {
-      position: 'absolute',
-      left: `${currentProperties.Left!}px`,
-      top: `${currentProperties.Top!}px`,
-      /* border width(5) * 2 = 10 */
-      width: `${currentProperties.Width!}px`,
-      height: `${currentProperties.Height!}px`,
-      display:
+    if (type === 'ComboBox' && this.isEditMode) {
+      return {
+        position: 'absolute',
+        left: `${currentProperties.Left!}px`,
+        top: `${currentProperties.Top!}px`,
+        /* border width(5) * 2 = 10 */
+        width: `${currentProperties.Width!}px`,
+        height: `${currentProperties.Height!}px`,
+        display:
+        this.isRunMode && currentProperties.Visible === false
+          ? 'none'
+          : 'block'
+      }
+    } else {
+      return {
+        position: 'absolute',
+        left: `${currentProperties.Left!}px`,
+        top: `${currentProperties.Top!}px`,
+        /* border width(5) * 2 = 10 */
+        width: `${currentProperties.Width!}px`,
+        height: `${currentProperties.Height!}px`,
+        display:
         this.isRunMode && currentProperties.Visible === false
           ? 'none'
           : 'block',
-      // cursor: !this.isRunMode ? 'move' : 'default',
-      zIndex: (highestZIndex !== -1) ? highestZIndex + 1 : extraData.zIndex! <= 0 ? '' : extraData.zIndex!
+        // cursor: !this.isRunMode ? 'move' : 'default',
+        zIndex: extraData.zIndex!
+      }
     }
   }
 
@@ -383,7 +408,6 @@ export default class ResizeControl extends FdSelectVue {
           ? 'none'
           : 'block',
       cursor: !this.isRunMode ? 'move' : 'default'
-      // zIndex: (highestZIndex !== -1) ? highestZIndex + 1 : extraData.zIndex! <= 0 ? '' : extraData.zIndex!
     }
   }
   get mainSelected () {
@@ -802,16 +826,18 @@ export default class ResizeControl extends FdSelectVue {
                 })
               }
             }
-          } else if (!selected.some(item => getContainer.includes(item))) {
-            this.isMoving = true
-            this.isEditMode = true
-            this.selectControl({
-              userFormId: this.userFormId,
-              select: {
-                container: this.getContainerList(containerId),
-                selected: [containerId]
-              }
-            })
+          } else {
+            if (selected.length === 1 || (selected.length > 1 && !selected.some(item => getContainer.includes(item)))) {
+              this.isMoving = true
+              this.isEditMode = true
+              this.selectControl({
+                userFormId: this.userFormId,
+                select: {
+                  container: this.getContainerList(containerId),
+                  selected: [containerId]
+                }
+              })
+            }
           }
         }
         if (this.isEditMode && (userData[this.controlId].type === 'Frame' || userData[this.controlId].type === 'MultiPage')) {
@@ -828,9 +854,17 @@ export default class ResizeControl extends FdSelectVue {
       callBack(this.controlId, this.isEditMode)
     }
   }
-  displayContextMenu (event: MouseEvent) {
+  displayContextMenu (event: MouseEvent, control: string) {
     event.preventDefault()
     this.previousSel = [...this.selectedControls[this.userFormId].selected]
+    if (control !== '') {
+      if (this.isEditMode) {
+        this.selectControl({
+          userFormId: this.userFormId,
+          select: { container: this.getContainerList(this.controlId), selected: [this.controlId] }
+        })
+      }
+    }
     if (this.isGroupControlelected === '') {
       this.selectedItem(event)
     } else {
@@ -851,6 +885,9 @@ export default class ResizeControl extends FdSelectVue {
     return { groupId: groupId, containerId: this.containerId }
   }
   containerBorderClick () {
+    if (this.isEditMode) {
+      EventBus.$emit('closeMenu')
+    }
     if (this.isEditMode && this.isMoveWhenMouseDown !== true) {
       if (this.propControlData.type === 'MultiPage' || this.propControlData.type === 'Frame') {
         this.selectControl({
@@ -902,7 +939,7 @@ export default class ResizeControl extends FdSelectVue {
   box-sizing: border-box;
   position: absolute;
   --border-width: 3;
-  --stripe-distance: 1px;
+  --stripe-distance: 2px;
   /* border: calc(var(--border-width) * 1px) solid transparent; */
   border-image: repeating-linear-gradient(
       -45deg,

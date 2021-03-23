@@ -47,6 +47,7 @@
           :value="properties.Text"
           @dragstart="dragBehavior"
           @keydown.enter.prevent
+          @keydown.tab.exact="moveToNextControl"
         />
         <div
           ref="hideSelectionDiv"
@@ -1504,7 +1505,13 @@ export default class FDComboBox extends Mixins(FdControlVue) {
       this.headWidth = '100%'
     }
   }
-
+  moveToNextControl (e: KeyboardEvent) {
+    if (this.isEditMode) {
+      e.preventDefault()
+      e.stopPropagation()
+      EventBus.$emit('focusNextControlOnAutoTab')
+    }
+  }
   handleTextInput (e: Event) {
     const controlPropData = this.properties
     if (controlPropData.AutoTab && controlPropData.MaxLength! > 0) {
@@ -1673,7 +1680,7 @@ export default class FDComboBox extends Mixins(FdControlVue) {
     textareaRef: HTMLTextAreaElement,
     hideSelectionDiv: HTMLDivElement
   ) {
-    if (this.isOpenForStyleProp && this.properties.Style === 1) {
+    if (this.isEditMode && this.properties.Style === 1) {
       this.open = !this.open
     }
     // if (!this.properties.HideSelection) {
@@ -1952,7 +1959,7 @@ export default class FDComboBox extends Mixins(FdControlVue) {
     }
     return {
       display: display,
-      zIndex: this.isEditMode ? (this.getHighestZIndex !== -1) ? this.getHighestZIndex + 1 + '' : this.extraDatas.zIndex! <= 0 ? '' : this.extraDatas.zIndex! + '' : ''
+      zIndex: this.isEditMode ? this.extraDatas.zIndex! + '' : ''
     }
   }
   protected get tdStyleObj (): Partial<CSSStyleDeclaration> {
