@@ -38,7 +38,7 @@
       "
       @keydown.exact="properties.PasswordChar !== '' ? handleDelete($event) : null"
       @blur="handleBlur($event, textareaRef, hideSelectionDiv)"
-      @click="handleClick(hideSelectionDiv)"
+      @click="handleClick"
       class="text-box-design"
       :value="
         properties.Value
@@ -47,6 +47,7 @@
       @dragstart="dragBehavior"
     />
     <label ref="autoSizeTextarea"></label>
+    <label ref="selectionMarginRef"></label>
   </div>
 </template>
 
@@ -111,6 +112,7 @@ export default class FDTextBox extends Mixins(FdControlVue) {
   @Ref('hideSelectionDiv') readonly hideSelectionDiv!: HTMLDivElement;
   @Ref('autoSizeTextarea') readonly autoSizeTextarea!: HTMLLabelElement;
   @Ref('textareaRef') textareaRef!: HTMLTextAreaElement;
+  @Ref('selectionMarginRef') readonly selectionMarginRef!: HTMLLabelElement;
 
   $el!: HTMLDivElement
   originalText: string = ''
@@ -213,7 +215,8 @@ export default class FDTextBox extends Mixins(FdControlVue) {
       display: display,
       overflowX: this.properties.AutoSize ? 'hidden' : this.getScrollBarX,
       overflowY: this.properties.AutoSize ? 'hidden' : this.getScrollBarY,
-      pointerEvents: this.isEditMode ? 'auto' : 'none'
+      pointerEvents: this.isEditMode ? 'auto' : 'none',
+      paddingLeft: controlProp.SelectionMargin ? '0px' : '0px'
     }
   }
 
@@ -252,6 +255,7 @@ export default class FDTextBox extends Mixins(FdControlVue) {
   handlePasswordChar (event: Event) {
     this.start = this.textareaRef.selectionStart
     this.end = this.textareaRef.selectionEnd
+    const eventTargetArea = event.target as HTMLTextAreaElement
     const controlPropData = this.properties
     if (event.target instanceof HTMLTextAreaElement) {
       if (!controlPropData.MultiLine) {
@@ -274,36 +278,36 @@ export default class FDTextBox extends Mixins(FdControlVue) {
         text.substring(this.data.properties!.CursorEndPosition as number)
         this.updateDataModel({ propertyName: 'Text', value: newData })
         this.updateDataModel({ propertyName: 'Value', value: newData })
-      } else if (text.length < event.target.value.length && (event instanceof InputEvent)) {
+      } else if (text.length < eventTargetArea.value.length && (event instanceof InputEvent)) {
         // insertion
         newData = [
-          text.slice(0, event.target.selectionStart - 1),
+          text.slice(0, eventTargetArea.selectionStart - 1),
           event.data,
-          text.slice(event.target.selectionStart - 1)
+          text.slice(eventTargetArea.selectionStart - 1)
         ].join('')
         this.updateDataModel({ propertyName: 'Text', value: newData })
         this.updateDataModel({ propertyName: 'Value', value: newData })
-      } else if (text.length > event.target.value.length) {
+      } else if (text.length > eventTargetArea.value.length) {
         // deletion
         newData = [
-          text.slice(0, event.target.selectionStart),
-          text.slice(event.target.selectionStart + 1)
+          text.slice(0, eventTargetArea.selectionStart),
+          text.slice(eventTargetArea.selectionStart + 1)
         ].join('')
         this.updateDataModel({ propertyName: 'Text', value: newData })
         this.updateDataModel({ propertyName: 'Value', value: newData })
       }
       this.updateDataModel({
         propertyName: 'CursorStartPosition',
-        value: event.target.selectionStart
+        value: eventTargetArea.selectionStart
       })
       this.updateDataModel({
         propertyName: 'CursorEndPosition',
-        value: event.target.selectionEnd
+        value: eventTargetArea.selectionEnd
       })
       const controlPropData = this.properties
       if (controlPropData.AutoTab && controlPropData.MaxLength! > 0) {
         if (event.target instanceof HTMLTextAreaElement) {
-          if (event.target.value.length === controlPropData.MaxLength) {
+          if (eventTargetArea.value.length === controlPropData.MaxLength) {
             EventBus.$emit('focusNextControlOnAutoTab')
           }
         }
@@ -775,8 +779,90 @@ export default class FDTextBox extends Mixins(FdControlVue) {
    * @param event its of FocusEvent
    * @event click
    */
-  handleClick (hideSelectionDiv: HTMLDivElement) {
-
+  handleClick (event: MouseEvent) {
+    debugger
+    const selectionStart = this.textareaRef.selectionStart
+    const selectionEnd = this.textareaRef.selectionEnd
+    // if (selectionEnd !== selectionStart) {
+    //   this.textareaRef.setSelectionRange(selectionStart, selectionStart)
+    // }
+    console.log(selectionStart)
+    if (event.offsetX < 11) {
+      // this.textareaRef.dispatchEvent(new MouseEvent('selectionChange'))
+      // let lineEnd = this.textareaRef.value.length
+      // if (this.textareaRef.value.slice(selectionStart).includes('\n')) {
+      //   lineEnd = this.textareaRef.value.indexOf('\n')
+      // }
+      // this.textareaRef.setSelectionRange(selectionStart, lineEnd)
+      this.selectionMargin(selectionStart)
+    }
+  }
+  selectionMargin (start: number) {
+    if (this.properties.SelectionMargin === true) {
+      this.$nextTick(() => {
+        debugger
+        const textareaRef: HTMLTextAreaElement = this.textareaRef
+        // replication of stype attribute to Label tag for autoSize property to work
+        let tempLabel: HTMLLabelElement = this.selectionMarginRef
+        if (this.properties.MultiLine) {
+          tempLabel.style.display = 'inline-block'
+          console.log('clientWidth', textareaRef.clientWidth)
+          tempLabel.style.width = textareaRef.clientWidth - 3 + 'px'
+        }
+        tempLabel.style.whiteSpace = 'nowrap'
+        tempLabel.style.fontFamily = textareaRef.style.fontFamily
+        tempLabel.style.fontStretch = textareaRef.style.fontStretch
+        tempLabel.style.fontStyle = textareaRef.style.fontStyle
+        tempLabel.style.whiteSpace = textareaRef.style.whiteSpace
+        tempLabel.style.wordBreak = textareaRef.style.wordBreak
+        tempLabel.style.fontSize = parseInt(textareaRef.style.fontSize) + 'px'
+        let initHeight = 0
+        let finalIndex = 0
+        let isSpacepresent = false
+        for (let i = start; i < this.textareaRef.value.length; i++) {
+          tempLabel.innerText = tempLabel.innerText + textareaRef.value[i]
+          if (i === start) {
+            initHeight = tempLabel.clientHeight
+          } else if (tempLabel.clientHeight > initHeight) {
+            if (tempLabel.innerText[i + 1] === ' ') {
+              finalIndex = i
+              tempLabel.innerText = ''
+              tempLabel.style.display = 'none'
+              break
+            } else {
+              for (let j = i; j >= 0; j--) {
+                if (tempLabel.innerText[j] === ' ') {
+                  isSpacepresent = true
+                  break
+                }
+              }
+              if (isSpacepresent) {
+                for (let j = i; j >= 0; j--) {
+                  if (tempLabel.innerText[j] === ' ') {
+                    finalIndex = j - 1
+                    break
+                  }
+                }
+              } else {
+                finalIndex = i - 1
+              }
+            }
+            tempLabel.innerText = ''
+            tempLabel.style.display = 'none'
+            break
+          } else if (i === this.textareaRef.value.length - 1) {
+            finalIndex = i
+            tempLabel.innerText = ''
+            tempLabel.style.display = 'none'
+          }
+        }
+        if (!isSpacepresent) {
+          this.textareaRef.setSelectionRange(start, finalIndex + 1)
+        } else {
+          this.textareaRef.setSelectionRange(start, start + finalIndex + 1)
+        }
+      })
+    }
   }
   /**
    * @description hides div instead of textarea when hideSelection is false
