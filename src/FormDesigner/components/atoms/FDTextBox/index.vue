@@ -3,6 +3,7 @@
   v-on="eventStoppers()"
   @click="textBoxClick"
   @mousedown="controlEditMode"
+   :style="outerTextBox"
   :tabindex="properties.TabIndex"
   @keydown.enter.self="setContentEditable($event, true)"
   @contextmenu="isEditMode ? openTextContextMenu($event): parentConextMenu($event)"
@@ -45,19 +46,6 @@
       "
       @dragstart="dragBehavior"
     />
-    <div
-      ref="hideSelectionDiv"
-      @click="divHide($event, textareaRef)"
-      :style="divcssStyleProperty"
-      @mouseover="updateMouseCursor"
-      :title="properties.ControlTipText"
-      class="text-box-design"
-    >
-      {{
-        properties.Value
-          | passwordFilter(properties.PasswordChar, properties.Value)
-      }}
-    </div>
     <label ref="autoSizeTextarea"></label>
   </div>
 </template>
@@ -130,6 +118,11 @@ export default class FDTextBox extends Mixins(FdControlVue) {
   fitToSizeWhenMultiLine: boolean = false
   start: number = 0
   end: number = 0
+  get outerTextBox () {
+    return {
+      cursor: this.controlCursor
+    }
+  }
   dblclick (e: Event) {
     if (this.isEditMode) {
       let newSelectionStart = 0
@@ -156,16 +149,6 @@ export default class FDTextBox extends Mixins(FdControlVue) {
       return true
     }
   }
-  // @Watch('properties.HideSelection')
-  // updateIsTextBoxDisabledPropWhenHideSelection () {
-  //   if (this.properties.HideSelection) {
-  //     this.textareaRef.style.display = 'block'
-  //     this.hideSelectionDiv.style.display = 'none'
-  //   } else {
-  //     this.textareaRef.style.display = 'none'
-  //     this.hideSelectionDiv.style.display = 'block'
-  //   }
-  // }
   /**
    * @description style object is passed to :style attribute in Textarea tag
    * dynamically changing the styles of the component based on properties
@@ -213,7 +196,6 @@ export default class FDTextBox extends Mixins(FdControlVue) {
         controlProp.WordWrap && controlProp.MultiLine ? 'break-word' : 'normal',
       color:
         controlProp.Enabled === true ? controlProp.ForeColor : this.getEnabled,
-      cursor: this.controlCursor,
       fontFamily: (font.FontStyle! !== '') ? this.setFontStyle : font.FontName!,
       fontSize: `${font.FontSize}px`,
       fontStyle: font.FontItalic || this.isItalic ? 'italic' : '',
@@ -230,7 +212,8 @@ export default class FDTextBox extends Mixins(FdControlVue) {
       fontStretch: (font.FontStyle !== '') ? this.tempStretch : '',
       display: display,
       overflowX: this.properties.AutoSize ? 'hidden' : this.getScrollBarX,
-      overflowY: this.properties.AutoSize ? 'hidden' : this.getScrollBarY
+      overflowY: this.properties.AutoSize ? 'hidden' : this.getScrollBarY,
+      pointerEvents: this.isEditMode ? 'auto' : 'none'
     }
   }
 
@@ -419,7 +402,7 @@ export default class FDTextBox extends Mixins(FdControlVue) {
    * @param event its of type MouseEvent
    * @event keydown.tab
    */
-  tabKeyBehavior (event: KeyboardEvent): boolean {
+  tabKeyBehavior (event: KeyboardEvent) {
     this.start = this.textareaRef.selectionStart + 1
     this.end = this.textareaRef.selectionEnd + 1
     if (this.properties.TabKeyBehavior) {
@@ -452,12 +435,14 @@ export default class FDTextBox extends Mixins(FdControlVue) {
           this.textareaRef.selectionStart = selectionStart + 1
           this.textareaRef.selectionEnd = selectionEnd + 1
         }
-        return false
       } else {
         throw new Error('Expected HTMLTextAreaElement but found different element')
       }
     } else {
-      return true
+      if (this.isEditMode) {
+        event.stopPropagation()
+        EventBus.$emit('focusNextControlOnAutoTab')
+      }
     }
   }
   /**
@@ -782,29 +767,6 @@ export default class FDTextBox extends Mixins(FdControlVue) {
         selection.removeRange(selection.getRangeAt(i))
       }
     }
-    // if (!this.properties.HideSelection) {
-    //   if (event.target instanceof HTMLTextAreaElement) {
-    //     const eventTarget = event.target
-    //     hideSelectionDiv.style.display = 'block'
-    //     hideSelectionDiv.style.height = this.properties.Height! + 'px'
-    //     hideSelectionDiv.style.width = this.properties.Width! + 'px'
-    //     textareaRef.style.display = 'none'
-    //     let textarea = eventTarget.value
-    //     let firstPart =
-    //     textarea.slice(0, eventTarget.selectionEnd) +
-    //     '</span>' +
-    //     textarea.slice(eventTarget.selectionEnd + Math.abs(0))
-    //     let text =
-    //     firstPart.slice(0, eventTarget.selectionStart) +
-    //     "<span style='background-color:lightblue'>" +
-    //     firstPart.slice(eventTarget.selectionStart + Math.abs(0))
-    //     hideSelectionDiv.innerHTML = text
-    //   } else {
-    //     throw new Error('Expected HTMLTextAreaElement but found different element')
-    //   }
-    // } else {
-    //   return undefined
-    // }
   }
   /**
    *@description hides the div when focus comes to textarea when hideSelection
@@ -814,11 +776,7 @@ export default class FDTextBox extends Mixins(FdControlVue) {
    * @event click
    */
   handleClick (hideSelectionDiv: HTMLDivElement) {
-    // if (!this.properties.HideSelection) {
-    //   hideSelectionDiv.style.display = 'none'
-    // } else {
-    //   return undefined
-    // }
+
   }
   /**
    * @description hides div instead of textarea when hideSelection is false
